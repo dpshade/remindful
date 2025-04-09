@@ -1,0 +1,56 @@
+.popover-container {
+  position: fixed; /* Use fixed positioning for overlay effect */
+  background-color: var(--bg-color);
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  z-index: 1200; /* Ensure it's above other elements */
+  min-width: 180px; /* Minimum width */
+  padding: calc(var(--spacing-unit) / 2) 0; /* Vertical padding, no horizontal */
+  animation: popover-fade-in 0.1s ease-out;
+  border: 1px solid var(--border-color);
+}
+
+@keyframes popover-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Style for items inside the popover (assuming buttons) */
+.popover-container button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background-color 0.15s ease;
+}
+
+.popover-container button:hover {
+  background-color: var(--hover-color);
+}
+
+/* Style for date input if placed inside popover */
+.popover-container .date-input-wrapper {
+  padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+  border-top: 1px solid var(--border-color);
+}
+
+.popover-container .date-input {
+  width: 100%;
+  padding: calc(var(--spacing-unit) / 2) var(--spacing-unit);
+  font-size: 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  margin-top: calc(var(--spacing-unit) / 2);
+  margin-bottom: var(--spacing-unit); /* Add margin below date input */
+} 

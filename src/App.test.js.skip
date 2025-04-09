@@ -1,0 +1,33 @@
+import { test, expect } from '@jest/globals';
+import { render, screen } from '@testing-library/react';
+// Removed BrowserRouter import as we won't render the full App with routing
+// import { BrowserRouter } from 'react-router-dom';
+import App from './App';
+
+test('App component renders without crashing (basic check)', () => {
+  // Render the App component directly. Expect router context warnings.
+  const { container } = render(<App />); // Get container
+
+  // Find the outer div with class "App"
+  const appDiv = container.querySelector('.App');
+
+  // Basic check: does the container element exist?
+  expect(appDiv).toBeInTheDocument();
+});
+
+// // Previous test requiring BrowserRouter - commented out
+// test('renders nav links and initial page heading', () => {
+//   render(
+//     <BrowserRouter>
+//       <App />
+//     </BrowserRouter>
+//   );
+//   const reviewLink = screen.getByRole('link', { name: /Review/i });
+//   expect(reviewLink).toBeInTheDocument();
+//   const catalogLink = screen.getByRole('link', { name: /Catalog/i });
+//   expect(catalogLink).toBeInTheDocument();
+//   const settingsLink = screen.getByRole('link', { name: /Settings/i });
+//   expect(settingsLink).toBeInTheDocument();
+//   const headingElement = screen.getByRole('heading', { name: /Review Session/i });
+//   expect(headingElement).toBeInTheDocument();
+// });

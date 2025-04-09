@@ -1,0 +1,894 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box; /* Apply border-box universally */
+}
+
+/* Restore height: 100% to ensure proper nesting */
+html,
+body,
+#root {
+  height: 100%; /* Full height is critical for nested percentage heights */
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* Minimal Palette */
+  --bg-color: #ffffff;
+  --text-color: #1a1a1a;
+  --secondary-text-color: #666666;
+  --border-color: #f0f0f0; /* Extremely light grey, maybe only for nav top border */
+  --accent-color: #007AFF;
+  --accent-color-hover: #0056b3;
+  --danger-color: #FF3B30;
+  --danger-color-hover: #c51f1a;
+  --input-bg: #f8f8f8; /* Optional lighter background for inputs */
+  --button-secondary-bg: #e9e9eb;
+
+  /* Typography & Spacing */
+  --base-font-size: 17px; /* Slightly larger base for readability */
+  --base-line-height: 1.7;
+  --spacing-unit: 10px;
+  --container-padding: calc(var(--spacing-unit) * 3);
+  --content-max-width: 680px;
+  --sidebar-width: 220px;
+  --desktop-breakpoint: 992px;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "San Francisco", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: var(--base-font-size);
+  line-height: var(--base-line-height);
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+
+  /* Remove padding on desktop for fixed sidebar - handled by flex now */
+  @media (min-width: var(--desktop-breakpoint)) {
+    /* padding-left: var(--sidebar-width); */ /* Removed */
+  }
+}
+
+.App {
+  /* Mobile first: constrained width */
+  margin: 0 auto;
+  padding: var(--container-padding);
+  min-height: 100%; /* Ensure full height */
+  display: flex;
+  flex-direction: column;
+
+  /* Desktop: allow full width, no padding */
+  @media (min-width: var(--desktop-breakpoint)) {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    height: 100%; /* Important: explicit height */
+  }
+}
+
+/* --- Navigation --- */
+nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(255, 255, 255, 0.95); /* Slightly transparent white */
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border-color);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+
+  /* Hide bottom nav on desktop */
+  @media (min-width: var(--desktop-breakpoint)) {
+    display: none;
+  }
+}
+
+nav ul {
+  list-style: none;
+  padding: 0 var(--spacing-unit);
+  margin: 0;
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  max-width: var(--content-max-width);
+}
+
+nav ul li {
+  flex: 1;
+  text-align: center;
+}
+
+nav ul li a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-unit) 0;
+  text-decoration: none;
+  color: var(--secondary-text-color);
+  font-size: 0.7rem; /* Even smaller nav text */
+  transition: color 0.15s ease-in-out;
+}
+
+nav ul li a svg {
+  font-size: 1.4rem; /* Slightly smaller icon */
+  margin-bottom: calc(var(--spacing-unit) / 3);
+}
+
+nav ul li a:hover,
+nav ul li a:focus {
+  color: var(--text-color);
+}
+
+nav ul li a.active {
+  color: var(--accent-color);
+}
+
+main {
+  @media (min-width: var(--desktop-breakpoint)) {
+    padding: 0; /* No padding on desktop */
+    height: 100%; /* Fill App's height */
+    overflow: hidden; /* Prevent scrolling at main level */
+  }
+}
+
+/* --- General Elements --- */
+h1 {
+  font-size: 2rem; /* Larger page titles */
+  font-weight: 700;
+  margin-bottom: calc(var(--spacing-unit) * 4);
+  margin-top: var(--spacing-unit);
+}
+
+h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-top: calc(var(--spacing-unit) * 5);
+  margin-bottom: calc(var(--spacing-unit) * 2);
+  border: none; /* Remove border */
+  padding-bottom: 0;
+}
+
+h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: calc(var(--spacing-unit) * 4);
+  margin-bottom: var(--spacing-unit);
+  color: var(--secondary-text-color);
+  text-transform: uppercase; /* Uppercase subheadings */
+  letter-spacing: 0.5px;
+}
+
+p {
+  margin-bottom: var(--spacing-unit);
+}
+
+a {
+  color: var(--accent-color);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--accent-color-hover);
+}
+
+/* --- Buttons --- */
+button,
+input[type="submit"],
+input[type="button"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-unit);
+  padding: calc(var(--spacing-unit) * 1.2) calc(var(--spacing-unit) * 2);
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 10px; /* Even more rounded */
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, transform 0.1s ease-out;
+  background-color: var(--accent-color);
+  color: white;
+  text-align: center;
+  line-height: 1.4;
+}
+
+button:hover {
+  background-color: var(--accent-color-hover);
+}
+
+button:active {
+    transform: scale(0.98); /* Subtle press effect */
+}
+
+/* Secondary Button Style */
+button.secondary {
+  background-color: var(--button-secondary-bg);
+  color: var(--text-color);
+}
+button.secondary:hover {
+  background-color: #dcdce0; /* Slightly darker grey */
+}
+
+/* Danger Button Style */
+button.danger {
+  background-color: var(--danger-color);
+  color: white;
+}
+button.danger:hover {
+  background-color: var(--danger-color-hover);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* --- Inputs & Forms --- */
+input[type="text"],
+input[type="number"],
+input[type="url"],
+textarea,
+select {
+  display: block;
+  width: 100%;
+  padding: calc(var(--spacing-unit) * 1.2) calc(var(--spacing-unit) * 1.5);
+  margin-bottom: var(--spacing-unit);
+  font-size: 1rem;
+  line-height: var(--base-line-height);
+  color: var(--text-color);
+  background-color: var(--input-bg);
+  border: none; /* Remove border */
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+textarea {
+    min-height: 100px; /* Give textarea more default space */
+}
+
+input[type="file"] {
+  display: block;
+  margin-top: var(--spacing-unit);
+  border: none;
+  padding: 0;
+  background: none;
+  color: var(--secondary-text-color);
+  font-size: 0.9rem;
+}
+
+label {
+  display: block;
+  margin-bottom: calc(var(--spacing-unit) / 2);
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--secondary-text-color);
+}
+
+form div {
+  margin-bottom: calc(var(--spacing-unit) * 2.5);
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--border-color);
+  margin: calc(var(--spacing-unit) * 4) 0; /* More spacing around hr */
+}
+
+small {
+  color: var(--secondary-text-color);
+  font-size: 0.85rem;
+}
+
+/* --- Component Specific --- */
+
+/* Item Summary View (was ItemDetailView) styling for Catalog */
+.item-summary-view { /* Renamed class */
+  padding: var(--spacing-unit) 0;
+  margin: calc(var(--spacing-unit) * 2) 0;
+  border-bottom: 1px solid var(--border-color); /* Use border as separator in list */
+}
+
+.item-summary-view:last-child {
+    border-bottom: none; /* No border for the last item */
+}
+
+.item-summary-view h4 {
+  margin-top: 0;
+  margin-bottom: var(--spacing-unit);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.item-summary-view .metadata {
+    margin-top: var(--spacing-unit);
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--spacing-unit) * 2);
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--secondary-text-color);
+}
+
+.item-summary-view .content-preview {
+    color: var(--secondary-text-color);
+    font-size: 0.9rem;
+    margin-bottom: var(--spacing-unit);
+    /* Truncate long text */
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Show only 2 lines */
+    -webkit-box-orient: vertical;
+}
+
+.item-summary-view .actions {
+  margin-top: var(--spacing-unit);
+  display: flex;
+  gap: var(--spacing-unit);
+}
+
+/* Style for small actions in catalog */
+.item-summary-view .actions button {
+    padding: calc(var(--spacing-unit) * 0.5) var(--spacing-unit);
+    font-size: 0.85rem;
+    gap: calc(var(--spacing-unit) * 0.5);
+}
+.item-summary-view .actions button svg {
+    font-size: 1em;
+}
+
+/* Settings Page Specific */
+.settings-section {
+  margin-bottom: calc(var(--spacing-unit) * 5);
+}
+.settings-section h3 {
+  margin-top: 0;
+}
+
+/* Utility Messages */
+.error-message,
+.success-message {
+  padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.5);
+  margin: calc(var(--spacing-unit) * 2) 0;
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+.error-message {
+  color: var(--danger-color);
+  background-color: #ffebee;
+}
+
+.success-message {
+  color: #1e4620;
+  background-color: #e8f5e9;
+}
+
+/* --- Reader View --- */
+.reader-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+}
+
+.reader-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--container-padding);
+    padding-bottom: calc(var(--spacing-unit) * 8); /* Space for sticky actions */
+}
+
+.reader-content a {
+    color: var(--accent-color);
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.reader-content a:hover {
+    text-decoration: underline;
+}
+
+.reader-content .item-content {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.reader-content h3 {
+    margin-top: 0;
+    margin-bottom: var(--spacing-unit);
+    color: var(--text-color);
+}
+
+.reader-actions {
+    display: flex;
+    gap: var(--spacing-unit);
+    padding: var(--spacing-unit);
+    background-color: var(--bg-color);
+    border-top: 1px solid var(--border-color);
+    border-left: 1px solid var(--border-color); /* Add left border */
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    backdrop-filter: blur(8px);
+    background-color: rgba(255, 255, 255, 0.9);
+}
+
+.reader-actions .action-button {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: calc(var(--spacing-unit) / 2);
+    padding: var(--spacing-unit);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 40px;
+}
+
+.reader-actions .action-button:hover {
+    background-color: var(--hover-color);
+    border-color: var(--accent-color);
+}
+
+.reader-actions .action-button.danger {
+    color: var(--danger-color);
+    border-color: var(--danger-color);
+}
+
+.reader-actions .action-button.danger:hover {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.reader-actions .action-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+.reader-actions .action-button span {
+    font-size: 0.9rem;
+}
+
+/* --- Review Page Specific --- */
+.review-layout {
+  /* Mobile: stack layout (default) */
+  display: flex;
+  height: 90vh;
+
+  /* Desktop: side-by-side layout */
+  @media (min-width: var(--desktop-breakpoint)) {
+    display: flex;
+    height: 100%; /* Fill main's height */
+    width: 100%;
+  }
+}
+
+.sidebar {
+  /* Mobile: Normal flow */
+  width: 30%;
+  margin-bottom: calc(var(--spacing-unit) * 3);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  overflow-y: auto;
+
+  /* Desktop: Fixed width sidebar */
+  @media (min-width: var(--desktop-breakpoint)) {
+    width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
+    flex: none;
+    height: 100%;
+    background-color: var(--bg-color);
+    border-right: 1px solid var(--border-color);
+    margin-bottom: 0;
+  }
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: calc(var(--spacing-unit) * 8);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.sidebar-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb {
+  background-color: var(--border-color);
+  border-radius: 3px;
+}
+
+.sidebar h2 {
+    margin-top: 0; /* Adjust heading margin in sidebar */
+    font-size: 1.1rem;
+    border: none;
+    text-transform: uppercase;
+    color: var(--secondary-text-color);
+    letter-spacing: 0.5px;
+    margin-bottom: var(--spacing-unit);
+    margin-right: auto; /* Push button to the right */
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--spacing-unit) / 2);
+}
+
+.sidebar-actions {
+    display: flex;
+    gap: var(--spacing-unit);
+    padding: var(--spacing-unit);
+    background-color: var(--bg-color);
+    border-top: 1px solid var(--border-color);
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    backdrop-filter: blur(8px);
+    background-color: rgba(255, 255, 255, 0.9);
+}
+
+.menu-button,
+.new-item-button {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-unit);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 40px;
+}
+
+.menu-button:hover,
+.new-item-button:hover {
+    background-color: var(--hover-color);
+    border-color: var(--accent-color);
+}
+
+.menu-button svg,
+.new-item-button svg {
+    width: 20px;
+    height: 20px;
+    color: var(--text-color);
+}
+
+.menu-button:hover svg,
+.new-item-button:hover svg {
+    color: var(--accent-color);
+}
+
+.sidebar li {
+    padding: var(--spacing-unit) calc(var(--spacing-unit) * 0.5);
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background-color 0.15s ease-in-out;
+    border: 1px solid transparent; /* Placeholder for active state */
+}
+
+.sidebar li:hover {
+    background-color: var(--input-bg);
+}
+
+.sidebar li.selected {
+    background-color: #e0eafc; /* Light blue background for selected */
+    border-color: var(--accent-color); /* Subtle border */
+    color: var(--text-color); /* Ensure text remains dark */
+}
+
+.sidebar li .item-title {
+    font-weight: 500;
+    font-size: 0.95rem;
+    display: block; /* Ensure it takes full width */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar li .item-meta {
+    font-size: 0.75rem;
+    color: var(--secondary-text-color);
+    display: block;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.sidebar li .due-date {
+    color: var(--accent-color);
+    font-size: 0.7rem;
+}
+
+/* Canvas Placeholder */
+.main-canvas {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+} 
+
+.canvas-placeholder {
+    color: var(--secondary-text-color);
+    text-align: center;
+    padding: calc(var(--spacing-unit) * 5) 0;
+    font-size: 1.1rem;
+}
+
+/* Review Actions (below ReaderView) */
+.review-actions {
+    margin-top: calc(var(--spacing-unit) * 3);
+    padding-top: calc(var(--spacing-unit) * 2);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-around; /* Space out actions */
+    gap: var(--spacing-unit);
+}
+
+.review-actions button {
+    /* Buttons might not need to flex: 1 anymore */
+    /* flex: 1; */
+}
+
+/* WYSIWYG / Textarea Placeholder Style */
+.new-item-canvas {
+    height: 100%; /* Attempt to fill canvas height */
+    display: flex;
+    flex-direction: column;
+}
+
+.new-item-canvas textarea {
+    flex-grow: 1; /* Allow textarea to expand */
+    font-size: var(--base-font-size);
+    line-height: var(--base-line-height);
+    width: 100%;
+    border: none;
+    background-color: transparent;
+    padding: 0; /* Remove padding, handled by parent */
+    resize: none; /* Disable manual resize */
+    outline: none;
+    box-sizing: border-box;
+}
+
+.new-item-canvas .save-button-container {
+    margin-top: var(--spacing-unit);
+    text-align: right;
+    flex-shrink: 0; /* Prevent button container shrinking */
+}
+
+.new-item-canvas .save-button {
+    background-color: #2c2c2c;
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.new-item-canvas .save-button:hover:not(:disabled) {
+    background-color: #1a1a1a;
+    transform: scale(1.05);
+}
+
+.new-item-canvas .save-button:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.new-item-canvas .save-button:disabled {
+    background-color: #666;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.new-item-canvas .save-button svg {
+    margin: 0;
+}
+
+/* --- Modal Component --- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100; /* Above all other content */
+  backdrop-filter: blur(2px);
+}
+
+.modal-container {
+  background-color: var(--bg-color);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  animation: modal-fade-in 0.2s ease-out;
+}
+
+@keyframes modal-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  padding: var(--container-padding);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-color);
+}
+
+.modal-close {
+  background: none;
+  color: var(--secondary-text-color);
+  padding: 8px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  background-color: var(--input-bg);
+  color: var(--text-color);
+}
+
+.modal-content {
+  padding: var(--container-padding);
+}
+
+/* Modal Action List */
+.modal-action-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-unit);
+}
+
+.modal-action-list li {
+  width: 100%;
+}
+
+.modal-action-list button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-unit);
+  padding: var(--spacing-unit);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modal-action-list button:hover {
+  background-color: var(--hover-color);
+  border-color: var(--accent-color);
+}
+
+.modal-action-list button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.text-input-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: var(--container-padding);
+    position: relative;
+}
+
+.text-input {
+    flex: 1;
+    width: 100%;
+    padding: var(--spacing-unit);
+    border: none;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: inherit;
+    font-size: 1rem;
+    line-height: 1.5;
+    resize: none;
+}
+
+.text-input:focus {
+    outline: none;
+}
+
+.text-input-actions {
+    position: absolute;
+    bottom: 0; /* Position at the very bottom edge */
+    right: 0; /* Position at the very right edge */
+    padding: var(--spacing-unit); /* Add padding around the button itself */
+    z-index: 1;
+}
+
+.text-input-actions button {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background-color: var(--text-color);
+    color: var(--bg-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.text-input-actions button:hover {
+    background-color: var(--secondary-text-color);
+    transform: scale(1.05);
+}
+
+.text-input-actions button svg {
+    width: 20px;
+    height: 20px;
+}
+
+.text-input-actions button.secondary {
+    display: none;
+}
