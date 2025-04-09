@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import ReaderView from '../components/reader-view';
 import Modal from '../components/modal';
 import { getDueReviewItems, getSettings, saveReviewItem, getAllReviewItems } from '../storage/storage';
 import { markItemAsRead, deleteReviewItem, scheduleItemForDate } from '../logic/review-actions-mvp';
-import { FaPlus, FaFileAlt, FaLink, FaCloudUploadAlt, FaInbox, FaList, FaSave } from 'react-icons/fa';
+import { FaPlus, FaFileAlt, FaCloudUploadAlt, FaInbox, FaList, FaSave } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
+import { calculateInitialReviewState } from '../logic/scheduler';
+import { readFileAsDataURL } from '../utils/file-helpers';
 
 function ReviewPage() {
   const [dueItems, setDueItems] = useState([]);
@@ -17,6 +19,8 @@ function ReviewPage() {
   const [showAllItems, setShowAllItems] = useState(false);
   const [allItems, setAllItems] = useState([]);
   const [textInput, setTextInput] = useState('');
+  const fileInputRef = useRef(null);
+  const [isFileUploading, setIsFileUploading] = useState(false);
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -140,15 +144,78 @@ function ReviewPage() {
     }
   }, [loadData, textInput, handleCloseTextInput]);
 
-  const handleAddLink = () => {
-    alert('Add link functionality coming soon!');
+  const handleUploadFile = useCallback(() => {
     setIsAddModalOpen(false);
-  };
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  }, []);
 
-  const handleUploadFile = () => {
-    alert('File upload functionality coming soon!');
-    setIsAddModalOpen(false);
-  };
+  const handleFileChange = useCallback(async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    setError(null);
+    setIsFileUploading(true);
+    try {
+      const settings = await getSettings();
+      if (!settings) {
+        throw new Error("Settings not available.");
+      }
+      
+      const itemPriority = 5; // Default priority
+      const { nextReviewDate, interval, easeFactor } = calculateInitialReviewState(settings, itemPriority);
+      let itemType = 'note';
+      let itemContent = '';
+      let fileName = file.name;
+
+      // Determine file type and handle accordingly
+      if (file.type.startsWith('image/')) {
+        itemType = 'image';
+        itemContent = await readFileAsDataURL(file);
+      } else if (file.type === 'application/pdf') {
+        itemType = 'pdf';
+        itemContent = await readFileAsDataURL(file);
+      } else {
+        // Try to read as text for other file types
+        try {
+          itemContent = await file.text();
+          itemType = 'note';
+        } catch (readErr) {
+          console.error("Could not read file as text:", readErr);
+          throw new Error("Unsupported file type. Please upload an image, PDF, or text file.");
+        }
+      }
+
+      const newItem = {
+        id: uuidv4(),
+        type: itemType,
+        content: itemContent,
+        fileName: fileName,
+        priority: itemPriority,
+        addedDate: Date.now(),
+        nextReviewDate: nextReviewDate,
+        interval: interval,
+        easeFactor: easeFactor,
+        tags: []
+      };
+
+      await saveReviewItem(newItem);
+      await loadData();
+      
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      
+      alert(`${itemType.charAt(0).toUpperCase() + itemType.slice(1)} added successfully!`);
+    } catch (err) {
+      console.error("Error uploading file:", err);
+      setError(`Failed to upload file: ${err.message}`);
+    } finally {
+      setIsFileUploading(false);
+    }
+  }, [loadData]);
 
   const handleShowAllItems = useCallback(async () => {
     try {
@@ -211,6 +278,7 @@ function ReviewPage() {
       </aside>
 
       <main className="main-canvas">
+        {isFileUploading && <div className="file-upload-overlay">Uploading file...</div>}
         {isTextInputOpen ? (
           <div className="text-input-container">
             <textarea
@@ -219,6 +287,13 @@ function ReviewPage() {
               rows={10}
               value={textInput}
               onChange={(e) => setTextInput(e.target.value)}
+              onKeyDown={(e) => {
+                // Save on CMD+Enter (Mac) or Ctrl+Enter (Windows/Linux)
+                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSaveNewItem();
+                }
+              }}
             />
             <div className="text-input-actions">
               <button onClick={handleSaveNewItem} title="Save">
@@ -248,10 +323,19 @@ function ReviewPage() {
       >
         <ul className="modal-action-list">
           <li><button onClick={handleAddTextNote}><FaFileAlt /> Add Text Note</button></li>
-          <li><button onClick={handleAddLink}><FaLink /> Add Link</button></li>
-          <li><button onClick={handleUploadFile}><FaCloudUploadAlt /> Upload File</button></li>
+          <li><button onClick={handleUploadFile} disabled={isFileUploading}><FaCloudUploadAlt /> {isFileUploading ? 'Uploading...' : 'Upload File'}</button></li>
         </ul>
       </Modal>
+      
+      {/* Hidden file input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+        accept="image/*,application/pdf,text/*"
+        disabled={isFileUploading}
+      />
     </div>
   );
 }

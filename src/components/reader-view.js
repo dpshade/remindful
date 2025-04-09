@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { FaTrashAlt, FaCalendarAlt, FaArrowLeft, FaChevronLeft, FaChevronRight, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaTrashAlt, FaCalendarAlt, FaArrowLeft, FaChevronLeft, FaChevronRight, FaExternalLinkAlt, FaTimes, FaSearchPlus } from 'react-icons/fa';
 import Popover from './popover';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -84,6 +84,7 @@ const LinkPreview = ({ url }) => {
 function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllItems }) {
   const [isPostponePopoverOpen, setIsPostponePopoverOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [isImageZoomed, setIsImageZoomed] = useState(false);
   const postponeButtonRef = useRef(null);
 
   const handleOpenPostponePopover = useCallback(() => {
@@ -183,6 +184,18 @@ function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllIt
     );
   }, []);
 
+  // Close image zoom on escape key
+  useEffect(() => {
+    const handleEscKey = (e) => {
+      if (e.key === 'Escape' && isImageZoomed) {
+        setIsImageZoomed(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleEscKey);
+    return () => window.removeEventListener('keydown', handleEscKey);
+  }, [isImageZoomed]);
+
   if (!item) {
     return <div className="reader-view"><p>No item selected.</p></div>;
   }
@@ -194,7 +207,25 @@ function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllIt
       case 'link':
         return <LinkPreview url={item.content} />;
       case 'image':
-        return <img src={item.content} alt={item.fileName || 'Review image'} />;
+        return (
+          <div className="image-container">
+            <img 
+              src={item.content} 
+              alt={item.fileName || 'Review image'} 
+              className="responsive-image"
+              onClick={() => setIsImageZoomed(true)}
+              style={{ cursor: 'zoom-in' }}
+            />
+            <button 
+              className="zoom-button"
+              onClick={() => setIsImageZoomed(true)}
+              aria-label="Zoom image"
+              title="Zoom image"
+            >
+              <FaSearchPlus />
+            </button>
+          </div>
+        );
       case 'pdf':
         return (
           <a href={item.content} download={item.fileName} target="_blank" rel="noopener noreferrer">
@@ -265,6 +296,26 @@ function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllIt
           </div>
         </div>
       </Popover>
+
+      {/* Image Zoom Modal */}
+      {isImageZoomed && item.type === 'image' && (
+        <div className="image-zoom-overlay" onClick={() => setIsImageZoomed(false)}>
+          <div className="image-zoom-container">
+            <button 
+              className="close-zoom"
+              onClick={() => setIsImageZoomed(false)}
+              aria-label="Close zoom"
+            >
+              <FaTimes />
+            </button>
+            <img 
+              src={item.content} 
+              alt={item.fileName || 'Review image'} 
+              className="zoomed-image"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

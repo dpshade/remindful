@@ -138,6 +138,15 @@ function ManualInputForm() {
               rows={4}
               required
               placeholder='Enter your note or a URL (https://example.com)...'
+              onKeyDown={(e) => {
+                // Save on CMD+Enter (Mac) or Ctrl+Enter (Windows/Linux)
+                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  if (content.trim()) {
+                    handleSubmit(e);
+                  }
+                }
+              }}
             />
           </div>
         )}
@@ -180,6 +189,16 @@ function ManualInputForm() {
             value={tags}
             onChange={(e) => setTags(e.target.value)}
             placeholder="e.g., programming, ideas, articles"
+            onKeyDown={(e) => {
+              // Save on CMD+Enter (Mac) or Ctrl+Enter (Windows/Linux)
+              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                e.preventDefault();
+                if ((inputType === 'note' && content.trim()) || 
+                    (inputType === 'image' && selectedFile)) {
+                  handleSubmit(e);
+                }
+              }
+            }}
           />
         </div>
         <button type="submit" disabled={isSaving}>
