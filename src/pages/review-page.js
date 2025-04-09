@@ -61,15 +61,15 @@ function ReviewPage() {
     setIsTextInputOpen(true);
   }, [loadData]);
 
-  const handleBackToQueueAction = useCallback(async () => {
+  const handleMarkAsReadAction = useCallback(async (quality) => {
     if (!selectedItem) return;
     setError(null);
     try {
-      await markItemAsRead(selectedItem.id);
+      await markItemAsRead(selectedItem.id, quality);
       handleActionComplete();
     } catch (err) {
-      console.error("Error returning item to queue:", err);
-      setError(`Failed to return item to queue: ${err.message}`);
+      console.error("Error marking item as read:", err);
+      setError(`Failed to mark item as read: ${err.message}`);
     }
   }, [selectedItem, handleActionComplete]);
 
@@ -113,10 +113,10 @@ function ReviewPage() {
     setTextInput('');
   };
 
-  const handleCloseTextInput = () => {
+  const handleCloseTextInput = useCallback(() => {
     setIsTextInputOpen(false);
     setTextInput('');
-  };
+  }, []);
 
   const handleSaveNewItem = useCallback(async () => {
     if (!textInput.trim()) return;
@@ -261,7 +261,10 @@ function ReviewPage() {
           {!isLoading && !error && (
             <ul>
               {(showAllItems ? allItems : dueItems).length > 0 ?
-                (showAllItems ? allItems : dueItems).map(renderSidebarItem) :
+                (showAllItems ? allItems : dueItems)
+                  .slice() // Create a shallow copy to avoid mutating state
+                  .sort((a, b) => a.nextReviewDate - b.nextReviewDate) // Sort by upcoming date
+                  .map(renderSidebarItem) :
                 <li><p>No items found.</p></li>
               }
             </ul>
@@ -305,7 +308,7 @@ function ReviewPage() {
         ) : selectedItem ? (
           <ReaderView
             item={selectedItem}
-            onBackToQueue={handleBackToQueueAction}
+            onBackToQueue={handleMarkAsReadAction}
             onSchedule={handleScheduleAction}
             onDelete={handleDeleteAction}
             isItemFromAllItems={showAllItems}

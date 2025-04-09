@@ -186,20 +186,29 @@ const PDFViewer = ({ url, fileName }) => {
   );
 };
 
+// Mapping for user-facing options to quality score
+const QUALITY_MAPPING = {
+  'Need more of this': 1, // Hard
+  'Unsure': 3,           // Good
+  'Living it out': 5,    // Easy
+};
+
 /**
  * Component to display item content and provide review actions.
  * @param {object} props
  * @param {import('../types').ReviewItem} props.item - The review item to display.
- * @param {function} props.onBackToQueue - Handler for SRS update (shown for Inbox items).
+ * @param {function} props.onBackToQueue - Handler for SRS update, accepting a quality score (0-5).
  * @param {function} props.onSchedule - Handler for scheduling item for a specific timestamp.
  * @param {function} props.onDelete - Handler for deleting item.
  * @param {boolean} props.isItemFromAllItems - Flag indicating if item was selected from All Items view.
  */
 function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllItems }) {
   const [isPostponePopoverOpen, setIsPostponePopoverOpen] = useState(false);
+  const [isMarkReadPopoverOpen, setIsMarkReadPopoverOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [isImageZoomed, setIsImageZoomed] = useState(false);
   const postponeButtonRef = useRef(null);
+  const markReadButtonRef = useRef(null);
 
   const handleOpenPostponePopover = useCallback(() => {
     setSelectedDate(null);
@@ -209,6 +218,19 @@ function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllIt
   const handleClosePostponePopover = useCallback(() => {
     setIsPostponePopoverOpen(false);
   }, []);
+
+  const handleOpenMarkReadPopover = useCallback(() => {
+    setIsMarkReadPopoverOpen(true);
+  }, []);
+
+  const handleCloseMarkReadPopover = useCallback(() => {
+    setIsMarkReadPopoverOpen(false);
+  }, []);
+
+  const handleQualitySelect = useCallback((quality) => {
+    onBackToQueue(quality);
+    handleCloseMarkReadPopover();
+  }, [onBackToQueue, handleCloseMarkReadPopover]);
 
   const handleDateSelect = useCallback((date) => {
     setSelectedDate(date);
@@ -359,9 +381,15 @@ function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllIt
       </div>
       <div className="reader-actions">
         {!isItemFromAllItems && (
-          <button type="button" onClick={onBackToQueue} title="Mark as Read (SRS)" className="action-button">
+          <button
+            type="button"
+            ref={markReadButtonRef}
+            onClick={handleOpenMarkReadPopover}
+            title="Mark as Read..."
+            className="action-button"
+          >
             <ArrowUturnLeftIcon className="h-5 w-5 text-gray-600 mr-1" />
-            <span>Mark as Read</span>
+            <span>Mark as Read...</span>
           </button>
         )}
         <button 
@@ -379,6 +407,25 @@ function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllIt
           <span>Delete</span>
         </button>
       </div>
+
+      <Popover
+        isOpen={isMarkReadPopoverOpen}
+        onClose={handleCloseMarkReadPopover}
+        targetRef={markReadButtonRef}
+        placement='top-start'
+      >
+        <div className="quick-options">
+          {Object.entries(QUALITY_MAPPING).map(([label, quality]) => (
+            <button
+              key={quality}
+              type="button"
+              onClick={() => handleQualitySelect(quality)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </Popover>
 
       <Popover
         isOpen={isPostponePopoverOpen}

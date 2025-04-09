@@ -26,11 +26,16 @@ export async function postponeItem(itemId) {
 }
 
 /**
- * Marks an item as read, updating its last reviewed date and calculating the next review date using the scheduler.
+ * Marks an item as read, updating its last reviewed date and calculating the next review date based on recall quality.
  * @param {string} itemId - The ID of the item to mark as read.
+ * @param {number} quality - The recall quality score (0-5, where 5 is best).
  * @returns {Promise<import('../types').ReviewItem>}
  */
-export async function markItemAsRead(itemId) {
+export async function markItemAsRead(itemId, quality) {
+  if (quality < 0 || quality > 5) {
+    throw new Error('Invalid quality score. Must be between 0 and 5.');
+  }
+
   const item = await getReviewItem(itemId);
   if (!item) {
     throw new Error(`Item with ID ${itemId} not found for marking as read.`);
@@ -40,7 +45,7 @@ export async function markItemAsRead(itemId) {
     throw new Error("Settings not available for scheduling.");
   }
 
-  const { nextReviewDate, nextInterval, nextEaseFactor } = calculateNextReviewState(item, settings);
+  const { nextReviewDate, nextInterval, nextEaseFactor } = calculateNextReviewState(item, settings, quality);
 
   const updatedItem = {
     ...item,

@@ -5,61 +5,55 @@ const ONE_DAY_MS = 24 * 60 * 60 * 1000;
  * Lower priority numbers (e.g., 1) mean higher importance and potentially shorter initial intervals
  * or slower interval growth.
  *
- * This is an enhanced MVP scheduler, not a full SRS algorithm like SM-2.
+ * This is an enhanced MVP scheduler, incorporating recall quality feedback.
  *
  * @param {import('../types').ReviewItem} item - The item being reviewed (must include interval, easeFactor, priority).
- * @param {import('../types').AppSettings} settings - App settings (currently uses initialReviewDays as a base).
+ * @param {import('../types').AppSettings} settings - App settings (uses initialReviewDays).
+ * @param {number} quality - The recall quality score (0-5, where 5 is best).
  * @returns {{nextReviewDate: number, nextInterval: number, nextEaseFactor: number}} - Object containing calculated next values.
  */
-export function calculateNextReviewState(item, settings) {
-  // --- Parameters & Defaults ---
-  const currentInterval = item.interval || settings.initialReviewDays || 1;
-  const currentEaseFactor = item.easeFactor || 2.5; // Standard default
-  const priority = item.priority || 3; // Default priority
+export function calculateNextReviewState(item, settings, quality) {
+  const MIN_EASE = 1.3;
+  const currentInterval = item.interval ?? settings.initialReviewDays ?? 1;
+  const currentEaseFactor = item.easeFactor ?? 2.5;
+  const priority = item.priority ?? 3; // Default priority 3 if undefined
 
-  // --- Priority Modifier ---
-  // Simple modifier: Higher priority (lower number) slows interval growth slightly.
-  // Priority 1: 0.9x multiplier, Priority 3: 1.0x, Priority 5: 1.1x
-  // Adjust this curve as needed.
-  const priorityMultiplier = 1 + (priority - 3) * 0.05; // e.g., P1=0.9, P2=0.95, P3=1.0, P4=1.05, P5=1.1
+  // Priority Modifier - Higher priority (lower number) slightly slows interval growth
+  const priorityMultiplier = 1 + (priority - 3) * 0.05; // P1=0.9, P3=1.0, P5=1.1
 
-  // --- Calculate New Interval ---
-  // Basic approach: Multiply interval by ease factor, adjusted by priority.
-  // For the very first review (interval === initialReviewDays), maybe use a simpler step?
   let nextInterval;
-  if (item.lastReviewedDate === undefined || currentInterval <= settings.initialReviewDays) {
-    // First successful review or based on initial setting
-    // Use a slightly modified initial step based on priority?
-    // Example: Base * (1 + (3-priority)*0.1) => P1=1.2, P2=1.1, P3=1.0, P4=0.9, P5=0.8
-    // Let's keep it simpler for MVP: double the initial days, then apply priority.
-    nextInterval = (settings.initialReviewDays || 1) * 2 * priorityMultiplier;
-  } else {
-    // Subsequent reviews: interval * ease * priority
-    nextInterval = currentInterval * currentEaseFactor * priorityMultiplier;
+  let nextEaseFactor = currentEaseFactor;
+
+  if (quality < 3) { // 'hard' (Quality 0, 1, 2) - Forget, reset interval, decrease ease
+    nextInterval = settings.initialReviewDays || 1; // Reset to base interval
+    nextEaseFactor = Math.max(MIN_EASE, currentEaseFactor - 0.20); // Decrease EF significantly
+  } else { // 'good' or 'easy' (Quality 3, 4, 5)
+    if (currentInterval <= (settings.initialReviewDays || 1) && !item.lastReviewedDate) {
+       // First successful review of a new item
+       // Use a base multiplier, boost significantly for 'easy'
+       nextInterval = Math.round((settings.initialReviewDays || 1) * (quality === 5 ? 4 : 2.5));
+    } else {
+      // Subsequent reviews
+      // Base interval calculation: current * ease * priority modifier
+      nextInterval = Math.round(currentInterval * currentEaseFactor * priorityMultiplier);
+    }
+    // Adjust ease factor based on quality (SM-2 formula component)
+    nextEaseFactor = currentEaseFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+    nextEaseFactor = Math.max(MIN_EASE, nextEaseFactor); // Ensure ease doesn't drop too low
   }
 
-  // --- Interval Capping & Minimum ---
+  // Apply interval limits
   nextInterval = Math.max(1, nextInterval); // Ensure interval is at least 1 day
-  // Add a max interval cap? e.g., 365 days. Maybe not for MVP.
-  // nextInterval = Math.min(365, nextInterval);
+  // Consider adding a max interval if desired: nextInterval = Math.min(365, nextInterval);
 
-  // Round the interval for simplicity (optional)
-  nextInterval = Math.round(nextInterval);
-
-  // --- Ease Factor Adjustment (Simplified) ---
-  // A real SRS would adjust ease based on recall quality (Easy, Good, Hard).
-  // Since we only have "Read", we won't adjust ease in this MVP scheduler.
-  const nextEaseFactor = currentEaseFactor;
-
-  // --- Calculate Next Review Date ---
   const nextReviewDate = Date.now() + nextInterval * ONE_DAY_MS;
 
-  console.log(`Scheduler: Item ${item.id}, P${priority}, Int ${currentInterval} -> ${nextInterval}, EF ${currentEaseFactor}`);
+  console.log(`Scheduler: Item ${item.id}, P${priority}, Q${quality}, Int ${currentInterval} -> ${nextInterval}, EF ${currentEaseFactor.toFixed(2)} -> ${nextEaseFactor.toFixed(2)}`);
 
   return {
     nextReviewDate: Math.round(nextReviewDate),
     nextInterval: nextInterval,
-    nextEaseFactor: nextEaseFactor,
+    nextEaseFactor: parseFloat(nextEaseFactor.toFixed(2)), // Keep reasonable precision
   };
 }
 
