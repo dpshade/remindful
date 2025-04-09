@@ -414,32 +414,31 @@ small {
 
 .reader-actions {
     display: flex;
-    gap: var(--spacing-unit);
-    padding: var(--spacing-unit);
-    background-color: var(--bg-color);
+    justify-content: flex-end; /* Changed from space-between */
+    gap: var(--spacing-unit); /* Keep gap consistent */
+    padding-top: calc(var(--spacing-unit) * 2);
     border-top: 1px solid var(--border-color);
-    border-left: 1px solid var(--border-color); /* Add left border */
-    position: sticky;
-    bottom: 0;
-    z-index: 1;
-    backdrop-filter: blur(8px);
-    background-color: rgba(255, 255, 255, 0.9);
+    margin-top: calc(var(--spacing-unit) * 2);
+
+    /* Remove full width on desktop, let it hug content */
+    @media (min-width: var(--desktop-breakpoint)) {
+        /* Add specific styles for desktop if needed */
+    }
 }
 
 .reader-actions .action-button {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: calc(var(--spacing-unit) / 2);
-    padding: var(--spacing-unit);
-    border: 1px solid var(--border-color);
+    /* Adjusted padding: Slightly less horizontal padding */
+    padding: calc(var(--spacing-unit) * 1.2) calc(var(--spacing-unit) * 1.5); 
+    font-size: 0.9rem; /* Slightly smaller font */
+    background-color: #f0f0f0; /* Lighter background */
+    color: var(--secondary-text-color);
     border-radius: var(--border-radius);
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    min-height: 40px;
+    border: 1px solid transparent; /* Add border for structure */
+    display: inline-flex;
+    align-items: center;
+    gap: calc(var(--spacing-unit) / 2);
+    line-height: 1.2; /* Adjust line height for smaller font */
+    flex-shrink: 0; /* Prevent buttons from shrinking */
 }
 
 .reader-actions .action-button:hover {

@@ -1,9 +1,10 @@
-import React, { useState, useRef } from 'react';
-import { FaTrashAlt, FaCalendarAlt, FaArrowLeft } from 'react-icons/fa';
+import React, { useState, useRef, useCallback } from 'react';
+import { FaTrashAlt, FaCalendarAlt, FaArrowLeft, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import Popover from './popover';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import './datepicker-custom.css';
+import { ArrowUturnLeftIcon } from '@heroicons/react/24/outline';
 
 /**
  * Component to display item content and provide review actions.
@@ -19,16 +20,16 @@ function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllIt
   const [selectedDate, setSelectedDate] = useState(null);
   const postponeButtonRef = useRef(null);
 
-  const handleOpenPostponePopover = () => {
+  const handleOpenPostponePopover = useCallback(() => {
     setSelectedDate(null);
     setIsPostponePopoverOpen(true);
-  };
+  }, []);
 
-  const handleClosePostponePopover = () => {
+  const handleClosePostponePopover = useCallback(() => {
     setIsPostponePopoverOpen(false);
-  };
+  }, []);
 
-  const handleDateSelect = (date) => {
+  const handleDateSelect = useCallback((date) => {
     setSelectedDate(date);
     if (date) {
       // Ensure time is set to beginning of day
@@ -37,16 +38,84 @@ function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllIt
       onSchedule(newDate.getTime());
     }
     handleClosePostponePopover();
-  };
+  }, [onSchedule, handleClosePostponePopover]);
 
-  const handleQuickOptionSelect = (days) => {
+  const handleQuickOptionSelect = useCallback((days) => {
     const date = new Date();
     date.setDate(date.getDate() + days);
     date.setHours(0, 0, 0, 0);
     setSelectedDate(date);
     onSchedule(date.getTime());
     handleClosePostponePopover();
-  };
+  }, [onSchedule, handleClosePostponePopover]);
+
+  // Custom header that replaces the default month display with only dropdowns
+  const renderCustomHeader = useCallback(({
+    date,
+    changeYear,
+    changeMonth,
+    decreaseMonth,
+    increaseMonth,
+    prevMonthButtonDisabled,
+    nextMonthButtonDisabled
+  }) => {
+    const years = [];
+    const currentYear = new Date().getFullYear();
+    for (let i = currentYear - 10; i <= currentYear + 10; i++) {
+      years.push(i);
+    }
+
+    const months = Array.from({ length: 12 }, (_, i) => (
+      new Date(2000, i, 1).toLocaleString('default', { month: 'long' })
+    ));
+
+    return (
+      <div className="datepicker-header">
+        <button
+          type="button" // Prevent form submission if nested
+          className="datepicker-nav-button"
+          onClick={decreaseMonth}
+          disabled={prevMonthButtonDisabled}
+          aria-label="Previous Month"
+        >
+          <FaChevronLeft size={14} />
+        </button>
+        <div className="datepicker-select-container">
+          <select
+            className="datepicker-select"
+            value={date.getMonth()}
+            onChange={({ target: { value } }) => changeMonth(value)}
+          >
+            {months.map((month, index) => (
+              <option key={index} value={index}>
+                {month}
+              </option>
+            ))}
+          </select>
+          <select
+            className="datepicker-select"
+            value={date.getFullYear()}
+            onChange={({ target: { value } }) => changeYear(value)}
+          >
+            {years.map(year => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button
+          type="button" // Prevent form submission if nested
+          className="datepicker-nav-button"
+          onClick={increaseMonth}
+          disabled={nextMonthButtonDisabled}
+          aria-label="Next Month"
+        >
+          <FaChevronRight size={14} />
+        </button>
+      </div>
+    );
+  }, []);
 
   if (!item) {
     return <div className="reader-view"><p>No item selected.</p></div>;
@@ -85,12 +154,13 @@ function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllIt
       </div>
       <div className="reader-actions">
         {!isItemFromAllItems && (
-          <button onClick={onBackToQueue} title="Back to Queue (SRS)" className="action-button">
-            <FaArrowLeft />
-            <span>Back to Queue</span>
+          <button type="button" onClick={onBackToQueue} title="Mark as Read (SRS)" className="action-button">
+            <ArrowUturnLeftIcon className="h-5 w-5 text-gray-600 mr-1" />
+            <span>Mark as Read</span>
           </button>
         )}
         <button 
+          type="button" 
           ref={postponeButtonRef} 
           onClick={handleOpenPostponePopover} 
           title="Postpone..." 
@@ -99,7 +169,7 @@ function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllIt
           <FaCalendarAlt />
           <span>Postpone...</span>
         </button>
-        <button onClick={onDelete} title="Delete" className="action-button danger">
+        <button type="button" onClick={onDelete} title="Delete" className="action-button danger">
           <FaTrashAlt />
           <span>Delete</span>
         </button>
@@ -118,13 +188,18 @@ function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllIt
             popperClassName="datepicker-popper"
             calendarClassName="datepicker-calendar"
             dayClassName={() => "datepicker-day"}
+            renderCustomHeader={renderCustomHeader}
+            monthsShown={1}
+            fixedHeight
+            minDate={new Date()}
+            todayButton="Today"
           />
           <div className="quick-options">
-            <button onClick={() => handleQuickOptionSelect(1)}>Tomorrow</button>
-            <button onClick={() => handleQuickOptionSelect(3)}>In 3 days</button>
-            <button onClick={() => handleQuickOptionSelect(7)}>In 1 week</button>
-            <button onClick={() => handleQuickOptionSelect(30)}>In 1 month</button>
-            <button onClick={() => handleQuickOptionSelect(90)}>In 3 months</button>
+            <button type="button" onClick={() => handleQuickOptionSelect(1)}>Tomorrow</button>
+            <button type="button" onClick={() => handleQuickOptionSelect(3)}>In 3 days</button>
+            <button type="button" onClick={() => handleQuickOptionSelect(7)}>In 1 week</button>
+            <button type="button" onClick={() => handleQuickOptionSelect(30)}>In 1 month</button>
+            <button type="button" onClick={() => handleQuickOptionSelect(90)}>In 3 months</button>
           </div>
         </div>
       </Popover>
