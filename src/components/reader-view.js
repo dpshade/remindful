@@ -1,10 +1,9 @@
-import React, { useState, useRef, useMemo } from 'react';
-import { FaTrashAlt, FaCalendarAlt, FaArrowLeft, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import React, { useState, useRef } from 'react';
+import { FaTrashAlt, FaCalendarAlt, FaArrowLeft } from 'react-icons/fa';
 import Popover from './popover';
-
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-const DAY_NAMES = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import './datepicker-custom.css';
 
 /**
  * Component to display item content and provide review actions.
@@ -17,13 +16,11 @@ const DAY_NAMES = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
  */
 function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllItems }) {
   const [isPostponePopoverOpen, setIsPostponePopoverOpen] = useState(false);
-  const [calendarDate, setCalendarDate] = useState(new Date());
-  const [selectedDateTimestamp, setSelectedDateTimestamp] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
   const postponeButtonRef = useRef(null);
 
   const handleOpenPostponePopover = () => {
-    setCalendarDate(new Date());
-    setSelectedDateTimestamp(null);
+    setSelectedDate(null);
     setIsPostponePopoverOpen(true);
   };
 
@@ -31,51 +28,25 @@ function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllIt
     setIsPostponePopoverOpen(false);
   };
 
-  const handleDateSelect = (day) => {
-    const selected = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), day);
-    selected.setHours(0, 0, 0, 0);
-    const timestamp = selected.getTime();
-    setSelectedDateTimestamp(timestamp);
-    onSchedule(timestamp);
-  };
-
-  const handleRelativeDelay = (days) => {
-    const targetTimestamp = Date.now() + days * ONE_DAY_MS;
-    onSchedule(targetTimestamp);
+  const handleDateSelect = (date) => {
+    setSelectedDate(date);
+    if (date) {
+      // Ensure time is set to beginning of day
+      const newDate = new Date(date);
+      newDate.setHours(0, 0, 0, 0);
+      onSchedule(newDate.getTime());
+    }
     handleClosePostponePopover();
   };
 
-  const handleMonthDelay = (months) => {
-    const targetDate = new Date();
-    targetDate.setMonth(targetDate.getMonth() + months);
-    targetDate.setHours(0, 0, 0, 0);
-    onSchedule(targetDate.getTime());
+  const handleQuickOptionSelect = (days) => {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    date.setHours(0, 0, 0, 0);
+    setSelectedDate(date);
+    onSchedule(date.getTime());
     handleClosePostponePopover();
   };
-
-  const handlePrevMonth = () => {
-    setCalendarDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
-  };
-
-  const handleNextMonth = () => {
-    setCalendarDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
-  };
-
-  const calendarDays = useMemo(() => {
-    const year = calendarDate.getFullYear();
-    const month = calendarDate.getMonth();
-    const firstDayOfMonth = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    const days = [];
-    for (let i = 0; i < firstDayOfMonth; i++) {
-      days.push(null);
-    }
-    for (let i = 1; i <= daysInMonth; i++) {
-      days.push(i);
-    }
-    return days;
-  }, [calendarDate]);
 
   if (!item) {
     return <div className="reader-view"><p>No item selected.</p></div>;
@@ -103,6 +74,8 @@ function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllIt
         return <p>Unsupported item type: {item.type}</p>;
     }
   };
+
+  const initialDate = item.due ? new Date(item.due) : new Date();
 
   return (
     <div className="reader-view">
@@ -137,48 +110,22 @@ function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllIt
         onClose={handleClosePostponePopover}
         targetRef={postponeButtonRef}
       >
-        <div className="calendar-container">
-          <div className="calendar-header">
-            <button onClick={handlePrevMonth} className="calendar-nav"><FaChevronLeft size={14} /></button>
-            <span>{MONTH_NAMES[calendarDate.getMonth()].substring(0, 3)} {calendarDate.getFullYear()}</span>
-            <button onClick={handleNextMonth} className="calendar-nav"><FaChevronRight size={14} /></button>
+        <div className="datepicker-container">
+          <DatePicker
+            selected={selectedDate || initialDate}
+            onChange={handleDateSelect}
+            inline
+            popperClassName="datepicker-popper"
+            calendarClassName="datepicker-calendar"
+            dayClassName={() => "datepicker-day"}
+          />
+          <div className="quick-options">
+            <button onClick={() => handleQuickOptionSelect(1)}>Tomorrow</button>
+            <button onClick={() => handleQuickOptionSelect(3)}>In 3 days</button>
+            <button onClick={() => handleQuickOptionSelect(7)}>In 1 week</button>
+            <button onClick={() => handleQuickOptionSelect(30)}>In 1 month</button>
+            <button onClick={() => handleQuickOptionSelect(90)}>In 3 months</button>
           </div>
-          <div className="calendar-grid calendar-days-header">
-            {DAY_NAMES.map(day => <div key={day}>{day}</div>)}
-          </div>
-          <div className="calendar-grid">
-            {calendarDays.map((day, index) => {
-              if (!day) return <button key={index} className="calendar-day disabled" tabIndex={-1} />;
-              
-              const currentDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), day);
-              currentDate.setHours(0, 0, 0, 0);
-              const currentDayTimestamp = currentDate.getTime();
-              
-              const isToday = new Date().toDateString() === currentDate.toDateString();
-              
-              const isSelected = currentDayTimestamp === selectedDateTimestamp;
-              
-              return (
-                <button 
-                  key={index} 
-                  className={`calendar-day ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''}`}
-                  onClick={() => handleDateSelect(day)}
-                  aria-selected={isSelected}
-                  title={currentDate.toLocaleDateString()}
-                >
-                  {day}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="relative-delays-popover">
-          <button onClick={() => handleRelativeDelay(1)}>Tomorrow</button>
-          <button onClick={() => handleRelativeDelay(3)}>In 3 days</button>
-          <button onClick={() => handleRelativeDelay(7)}>In 1 week</button>
-          <button onClick={() => handleMonthDelay(1)}>In 1 month</button>
-          <button onClick={() => handleMonthDelay(3)}>In 3 months</button>
         </div>
       </Popover>
     </div>
