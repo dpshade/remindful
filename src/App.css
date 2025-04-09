@@ -14,26 +14,31 @@ body,
 }
 
 :root {
-  /* Minimal Palette */
+  /* Base spacing variables */
+  --spacing-unit: 8px;
+  --container-padding: 16px;
+  
+  /* Colors - updating accent color from blue to warm amber/orange */
   --bg-color: #ffffff;
-  --text-color: #1a1a1a;
+  --text-color: #333333;
   --secondary-text-color: #666666;
-  --border-color: #f0f0f0; /* Extremely light grey, maybe only for nav top border */
-  --accent-color: #007AFF;
-  --accent-color-hover: #0056b3;
-  --danger-color: #FF3B30;
-  --danger-color-hover: #c51f1a;
-  --input-bg: #f8f8f8; /* Optional lighter background for inputs */
-  --button-secondary-bg: #e9e9eb;
+  --border-color: #e0e0e0;
+  --hover-color: #f5f5f5;
+  
+  /* Change accent colors from blue to amber/orange */
+  --accent-color: #e67e22; /* Warm amber/orange */
+  --accent-color-hover: #d35400; /* Darker shade for hover */
+  --danger-color: #e74c3c; /* Keep danger color red */
+  
+  /* Sizing constants */
+  --border-radius: 8px;
+  --sidebar-width: 300px;
+  --desktop-breakpoint: 768px;
 
   /* Typography & Spacing */
   --base-font-size: 17px; /* Slightly larger base for readability */
   --base-line-height: 1.7;
-  --spacing-unit: 10px;
-  --container-padding: calc(var(--spacing-unit) * 3);
   --content-max-width: 680px;
-  --sidebar-width: 220px;
-  --desktop-breakpoint: 992px;
 }
 
 body {
@@ -586,7 +591,7 @@ small {
 }
 
 .sidebar li {
-    padding: var(--spacing-unit) calc(var(--spacing-unit) * 0.5);
+    padding: var(--spacing-unit) calc(var(--spacing-unit) * 1);
     cursor: pointer;
     border-radius: 6px;
     transition: background-color 0.15s ease-in-out;
@@ -598,7 +603,7 @@ small {
 }
 
 .sidebar li.selected {
-    background-color: #e0eafc; /* Light blue background for selected */
+    background-color: #f5f5f5; /* Light grey background for selected */
     border-color: var(--accent-color); /* Subtle border */
     color: var(--text-color); /* Ensure text remains dark */
 }

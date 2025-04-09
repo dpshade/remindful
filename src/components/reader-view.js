@@ -1,8 +1,10 @@
-import React, { useState, useRef } from 'react';
-import { FaTrashAlt, FaCalendarAlt, FaArrowLeft } from 'react-icons/fa';
+import React, { useState, useRef, useMemo } from 'react';
+import { FaTrashAlt, FaCalendarAlt, FaArrowLeft, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import Popover from './popover';
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const DAY_NAMES = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 /**
  * Component to display item content and provide review actions.
@@ -15,13 +17,13 @@ const ONE_DAY_MS = 24 * 60 * 60 * 1000;
  */
 function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllItems }) {
   const [isPostponePopoverOpen, setIsPostponePopoverOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState('');
+  const [calendarDate, setCalendarDate] = useState(new Date());
+  const [selectedDateTimestamp, setSelectedDateTimestamp] = useState(null);
   const postponeButtonRef = useRef(null);
 
   const handleOpenPostponePopover = () => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    setSelectedDate(tomorrow.toISOString().split('T')[0]);
+    setCalendarDate(new Date());
+    setSelectedDateTimestamp(null);
     setIsPostponePopoverOpen(true);
   };
 
@@ -29,13 +31,12 @@ function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllIt
     setIsPostponePopoverOpen(false);
   };
 
-  const handleConfirmSchedule = () => {
-    if (!selectedDate) return;
-    const date = new Date(selectedDate);
-    date.setHours(0, 0, 0, 0);
-    const dateTimestamp = date.getTime();
-    onSchedule(dateTimestamp);
-    handleClosePostponePopover();
+  const handleDateSelect = (day) => {
+    const selected = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), day);
+    selected.setHours(0, 0, 0, 0);
+    const timestamp = selected.getTime();
+    setSelectedDateTimestamp(timestamp);
+    onSchedule(timestamp);
   };
 
   const handleRelativeDelay = (days) => {
@@ -51,6 +52,30 @@ function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllIt
     onSchedule(targetDate.getTime());
     handleClosePostponePopover();
   };
+
+  const handlePrevMonth = () => {
+    setCalendarDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCalendarDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
+
+  const calendarDays = useMemo(() => {
+    const year = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const days = [];
+    for (let i = 0; i < firstDayOfMonth; i++) {
+      days.push(null);
+    }
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(i);
+    }
+    return days;
+  }, [calendarDate]);
 
   if (!item) {
     return <div className="reader-view"><p>No item selected.</p></div>;
@@ -112,21 +137,48 @@ function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllIt
         onClose={handleClosePostponePopover}
         targetRef={postponeButtonRef}
       >
-        <button onClick={() => handleRelativeDelay(1)}>Postpone 1 Day</button>
-        <button onClick={() => handleRelativeDelay(3)}>Postpone 3 Days</button>
-        <button onClick={() => handleRelativeDelay(7)}>Postpone 7 Days</button>
-        <button onClick={() => handleMonthDelay(1)}>Postpone 1 Month</button>
-        <button onClick={() => handleMonthDelay(3)}>Postpone 3 Months</button>
-        <div className="date-input-wrapper">
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="date-input"
-          />
-          <button onClick={handleConfirmSchedule}>
-            Set Date
-          </button>
+        <div className="calendar-container">
+          <div className="calendar-header">
+            <button onClick={handlePrevMonth} className="calendar-nav"><FaChevronLeft size={14} /></button>
+            <span>{MONTH_NAMES[calendarDate.getMonth()].substring(0, 3)} {calendarDate.getFullYear()}</span>
+            <button onClick={handleNextMonth} className="calendar-nav"><FaChevronRight size={14} /></button>
+          </div>
+          <div className="calendar-grid calendar-days-header">
+            {DAY_NAMES.map(day => <div key={day}>{day}</div>)}
+          </div>
+          <div className="calendar-grid">
+            {calendarDays.map((day, index) => {
+              if (!day) return <button key={index} className="calendar-day disabled" tabIndex={-1} />;
+              
+              const currentDate = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), day);
+              currentDate.setHours(0, 0, 0, 0);
+              const currentDayTimestamp = currentDate.getTime();
+              
+              const isToday = new Date().toDateString() === currentDate.toDateString();
+              
+              const isSelected = currentDayTimestamp === selectedDateTimestamp;
+              
+              return (
+                <button 
+                  key={index} 
+                  className={`calendar-day ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''}`}
+                  onClick={() => handleDateSelect(day)}
+                  aria-selected={isSelected}
+                  title={currentDate.toLocaleDateString()}
+                >
+                  {day}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="relative-delays-popover">
+          <button onClick={() => handleRelativeDelay(1)}>Tomorrow</button>
+          <button onClick={() => handleRelativeDelay(3)}>In 3 days</button>
+          <button onClick={() => handleRelativeDelay(7)}>In 1 week</button>
+          <button onClick={() => handleMonthDelay(1)}>In 1 month</button>
+          <button onClick={() => handleMonthDelay(3)}>In 3 months</button>
         </div>
       </Popover>
     </div>

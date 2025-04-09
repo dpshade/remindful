@@ -74,12 +74,12 @@ function ReviewPage() {
     setError(null);
     try {
       await scheduleItemForDate(selectedItem.id, dateTimestamp);
-      handleActionComplete();
+      await loadData();
     } catch (err) {
       console.error("Error scheduling item:", err);
       setError(`Failed to schedule item: ${err.message}`);
     }
-  }, [selectedItem, handleActionComplete]);
+  }, [selectedItem, loadData]);
 
   const handleDeleteAction = useCallback(async () => {
     if (!selectedItem) return;
