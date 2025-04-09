@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import './App.css';
 import ReviewPage from './pages/review-page';
-import CatalogPage from './pages/catalog-page';
+// import CatalogPage from './pages/catalog-page'; // Remove import
 import SettingsPage from './pages/settings-page';
+import AddNoteFromParam from './pages/add-note-from-param';
 import { saveReviewItem, getSettings, initializeSettingsIfNeeded } from './storage/storage';
 import { v4 as uuidv4 } from 'uuid';
 import { readFileAsDataURL } from './utils/file-helpers';
@@ -117,8 +118,9 @@ function App() {
           {shareError && <div className="error-message">Error: {shareError}</div>}
           <Routes>
             <Route path="/" element={<ReviewPage />} />
-            <Route path="/catalog" element={<CatalogPage />} />
+            {/* <Route path="/catalog" element={<CatalogPage />} /> */} {/* Remove route */}
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/add-note" element={<AddNoteFromParam />} />
           </Routes>
         </main>
       </div>

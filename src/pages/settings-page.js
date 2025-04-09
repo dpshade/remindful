@@ -69,7 +69,7 @@ function SettingsPage() {
       const jsonString = await generateExportJson();
       const blob = new Blob([jsonString], { type: "application/json;charset=utf-8" });
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      saveAs(blob, `review-app-pwa-backup-${timestamp}.json`);
+      saveAs(blob, `remindful-pwa-backup-${timestamp}.json`);
       setSyncSuccess('Data exported successfully!');
     } catch (err) {
       console.error("Export failed:", err);

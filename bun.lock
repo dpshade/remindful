@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "review-app-pwa",
+      "name": "remindful-pwa",
       "dependencies": {
         "@heroicons/react": "^2.2.0",
         "@testing-library/jest-dom": "^6.6.3",

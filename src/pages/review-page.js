@@ -282,30 +282,7 @@ function ReviewPage() {
 
       <main className="main-canvas">
         {isFileUploading && <div className="file-upload-overlay">Uploading file...</div>}
-        {isTextInputOpen ? (
-          <div className="text-input-container">
-            <textarea
-              className="text-input"
-              placeholder="Enter your text note here..."
-              rows={10}
-              value={textInput}
-              onChange={(e) => setTextInput(e.target.value)}
-              onKeyDown={(e) => {
-                // Save on CMD+Enter (Mac) or Ctrl+Enter (Windows/Linux)
-                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-                  e.preventDefault();
-                  handleSaveNewItem();
-                }
-              }}
-              autoFocus={true}
-            />
-            <div className="text-input-actions">
-              <button onClick={handleSaveNewItem} title="Save">
-                <FaSave />
-              </button>
-            </div>
-          </div>
-        ) : selectedItem ? (
+        {selectedItem ? (
           <ReaderView
             item={selectedItem}
             onBackToQueue={handleMarkAsReadAction}
@@ -314,8 +291,26 @@ function ReviewPage() {
             isItemFromAllItems={showAllItems}
           />
         ) : (
-          <div className="canvas-placeholder">
-            <p>Select an item to review or add new content.</p>
+          <div className="text-input-container">
+            <textarea
+              className="text-input"
+              placeholder="Enter your text note here... (Cmd/Ctrl+Enter to save)"
+              rows={10}
+              value={textInput}
+              onChange={(e) => setTextInput(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSaveNewItem();
+                }
+              }}
+              autoFocus={true}
+            />
+            <div className="text-input-actions">
+              <button onClick={handleSaveNewItem} title="Save Note">
+                <FaSave />
+              </button>
+            </div>
           </div>
         )}
       </main>
