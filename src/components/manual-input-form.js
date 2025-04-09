@@ -9,7 +9,7 @@ import { FaPlus } from "react-icons/fa"; // Icon
 const URL_REGEX = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i;
 
 function ManualInputForm() {
-  const [inputType, setInputType] = useState('note'); // 'note', 'link', or 'image'
+  const [inputType, setInputType] = useState('note'); // 'note' or 'image'
   const [content, setContent] = useState('');
   const [priority, setPriority] = useState(3); // Default priority
   const [tags, setTags] = useState(''); // Comma-separated tags
@@ -36,14 +36,13 @@ function ManualInputForm() {
     setIsSaving(true);
     setError(null);
 
-    // Input validation based on type
+    // Auto-detect content type
+    const isURL = URL_REGEX.test(content.trim());
+    const detectedType = isURL ? 'link' : 'note';
+
+    // Input validation
     if (inputType === 'note' && !content.trim()) {
-      setError('Note content cannot be empty.');
-      setIsSaving(false);
-      return;
-    }
-    if (inputType === 'link' && !URL_REGEX.test(content)) {
-      setError('Please enter a valid URL.');
+      setError('Content cannot be empty.');
       setIsSaving(false);
       return;
     }
@@ -73,7 +72,7 @@ function ManualInputForm() {
 
       const newItem = {
         id: uuidv4(),
-        type: inputType,
+        type: inputType === 'image' ? 'image' : detectedType,
         content: itemContent,
         fileName: fileName, // Store filename for images
         addedDate: Date.now(),
@@ -85,7 +84,7 @@ function ManualInputForm() {
       };
 
       await saveReviewItem(newItem);
-      alert(`${inputType.charAt(0).toUpperCase() + inputType.slice(1)} added successfully!`);
+      alert(`${newItem.type.charAt(0).toUpperCase() + newItem.type.slice(1)} added successfully!`);
 
       // Reset form
       setContent('');
@@ -96,8 +95,8 @@ function ManualInputForm() {
         fileInputRef.current.value = ''; // Reset file input visually
       }
     } catch (err) {
-      console.error(`Error saving ${inputType}:`, err);
-      setError(`Failed to save ${inputType}. ${err.message}`);
+      console.error(`Error saving item:`, err);
+      setError(`Failed to save item. ${err.message}`);
     } finally {
       setIsSaving(false);
     }
@@ -123,8 +122,7 @@ function ManualInputForm() {
           <label>
             Type:
             <select value={inputType} onChange={handleTypeChange}>
-              <option value="note">Note</option>
-              <option value="link">Link</option>
+              <option value="note">Text (Note or URL)</option>
               <option value="image">Image</option>
             </select>
           </label>
@@ -132,28 +130,14 @@ function ManualInputForm() {
 
         {inputType === 'note' && (
           <div>
-            <label htmlFor="contentInput">Note Content:</label>
+            <label htmlFor="contentInput">Content:</label>
             <textarea
               id="contentInput"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={4}
               required
-              placeholder='Enter your note here...'
-            />
-          </div>
-        )}
-
-        {inputType === 'link' && (
-          <div>
-            <label htmlFor="contentInput">URL:</label>
-            <input
-              type="url"
-              id="contentInput"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              required
-              placeholder='https://example.com'
+              placeholder='Enter your note or a URL (https://example.com)...'
             />
           </div>
         )}

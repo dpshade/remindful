@@ -1,10 +1,76 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { FaTrashAlt, FaCalendarAlt, FaArrowLeft, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { FaTrashAlt, FaCalendarAlt, FaArrowLeft, FaChevronLeft, FaChevronRight, FaExternalLinkAlt } from 'react-icons/fa';
 import Popover from './popover';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import './datepicker-custom.css';
 import { ArrowUturnLeftIcon } from '@heroicons/react/24/outline';
+
+// Link Preview component to gracefully handle URLs that can't be embedded
+const LinkPreview = ({ url }) => {
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [showFallback, setShowFallback] = useState(false);
+  const iframeRef = useRef(null);
+  const timeoutRef = useRef(null);
+  
+  useEffect(() => {
+    // Set a timeout - if the iframe doesn't load within 2 seconds, show fallback
+    timeoutRef.current = setTimeout(() => {
+      if (!iframeLoaded) {
+        setShowFallback(true);
+      }
+    }, 2000);
+    
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [iframeLoaded]);
+  
+  const handleIframeLoad = () => {
+    setIframeLoaded(true);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+  };
+  
+  return (
+    <div className="link-container">
+      {!showFallback && (
+        <iframe 
+          ref={iframeRef}
+          src={url} 
+          title="Embedded URL" 
+          className="url-iframe"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+          onLoad={handleIframeLoad}
+          style={{ display: showFallback ? 'none' : 'block' }}
+        />
+      )}
+      
+      {showFallback && (
+        <div className="iframe-fallback">
+          <div className="fallback-card">
+            <h4>External Link</h4>
+            <p className="url-display">{url}</p>
+            <p className="fallback-message">
+              This website may not be viewable in an embedded frame due to security restrictions.
+            </p>
+            <a 
+              href={url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="fallback-button"
+            >
+              <FaExternalLinkAlt /> Open in New Tab
+            </a>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 /**
  * Component to display item content and provide review actions.
@@ -126,11 +192,7 @@ function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllIt
       case 'note':
         return <p style={{ whiteSpace: 'pre-wrap' }}>{item.content}</p>;
       case 'link':
-        return (
-          <a href={item.content} target="_blank" rel="noopener noreferrer">
-            {item.content}
-          </a>
-        );
+        return <LinkPreview url={item.content} />;
       case 'image':
         return <img src={item.content} alt={item.fileName || 'Review image'} />;
       case 'pdf':

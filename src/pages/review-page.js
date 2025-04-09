@@ -118,10 +118,13 @@ function ReviewPage() {
     if (!textInput.trim()) return;
     setError(null);
     try {
+      // Auto-detect URL using the same regex pattern
+      const isURL = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i.test(textInput.trim());
+      
       const newItem = {
         id: uuidv4(),
-        type: 'note',
-        content: textInput,
+        type: isURL ? 'link' : 'note',
+        content: textInput.trim(),
         priority: 5,
         addedDate: Date.now(),
         nextReviewDate: Date.now(),
