@@ -198,6 +198,7 @@
   color: var(--accent-color, #0066cc);
   outline: none;
   padding-left: 16px;
+  border-radius: 0;
 }
 
 .quick-options button:focus-visible {

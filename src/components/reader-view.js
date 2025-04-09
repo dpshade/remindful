@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { FaTrashAlt, FaCalendarAlt, FaArrowLeft, FaChevronLeft, FaChevronRight, FaExternalLinkAlt, FaTimes, FaSearchPlus } from 'react-icons/fa';
+import { FaTrashAlt, FaCalendarAlt, FaArrowLeft, FaChevronLeft, FaChevronRight, FaExternalLinkAlt, FaTimes, FaSearchPlus, FaDownload, FaExpand } from 'react-icons/fa';
 import Popover from './popover';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -65,6 +65,120 @@ const LinkPreview = ({ url }) => {
             >
               <FaExternalLinkAlt /> Open in New Tab
             </a>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// PDF Viewer with fallback
+const PDFViewer = ({ url, fileName }) => {
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [showFallback, setShowFallback] = useState(false);
+  const [isPdfFullscreen, setIsPdfFullscreen] = useState(false);
+  const iframeRef = useRef(null);
+  const timeoutRef = useRef(null);
+  
+  useEffect(() => {
+    // Set a timeout - if the iframe doesn't load within 3 seconds, show fallback
+    timeoutRef.current = setTimeout(() => {
+      if (!iframeLoaded) {
+        setShowFallback(true);
+      }
+    }, 3000);
+    
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [iframeLoaded]);
+  
+  const handleIframeLoad = () => {
+    setIframeLoaded(true);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+  };
+  
+  return (
+    <div className="pdf-container">
+      {!showFallback ? (
+        <iframe 
+          ref={iframeRef}
+          src={url}
+          title={fileName || 'PDF Document'}
+          className="pdf-viewer"
+          onLoad={handleIframeLoad}
+        />
+      ) : (
+        <div className="pdf-fallback">
+          <div className="fallback-card">
+            <h4>PDF Document</h4>
+            {fileName && <p className="pdf-filename">{fileName}</p>}
+            <p className="fallback-message">
+              This PDF cannot be displayed directly in the viewer.
+            </p>
+            <div className="fallback-actions">
+              <a 
+                href={url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="fallback-button"
+              >
+                <FaExternalLinkAlt /> Open in New Tab
+              </a>
+              <a 
+                href={url} 
+                download={fileName || 'document.pdf'} 
+                className="fallback-button secondary"
+              >
+                <FaDownload /> Download
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {!showFallback && (
+        <div className="pdf-controls">
+          <button 
+            className="pdf-control-button"
+            onClick={() => setIsPdfFullscreen(true)} 
+            title="View fullscreen"
+          >
+            <FaExpand />
+          </button>
+          <a 
+            href={url} 
+            download={fileName} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="pdf-control-button"
+            title="Download PDF"
+          >
+            <FaDownload />
+          </a>
+        </div>
+      )}
+      
+      {/* PDF Fullscreen Modal */}
+      {isPdfFullscreen && (
+        <div className="pdf-fullscreen-overlay">
+          <div className="pdf-fullscreen-container">
+            <button 
+              className="close-pdf-fullscreen"
+              onClick={() => setIsPdfFullscreen(false)}
+              aria-label="Exit fullscreen"
+            >
+              <FaTimes />
+            </button>
+            <iframe 
+              src={url}
+              title={fileName || 'PDF Document'}
+              className="pdf-fullscreen-viewer"
+            />
           </div>
         </div>
       )}
@@ -184,11 +298,13 @@ function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllIt
     );
   }, []);
 
-  // Close image zoom on escape key
+  // Close image zoom or PDF fullscreen on escape key
   useEffect(() => {
     const handleEscKey = (e) => {
-      if (e.key === 'Escape' && isImageZoomed) {
-        setIsImageZoomed(false);
+      if (e.key === 'Escape') {
+        if (isImageZoomed) {
+          setIsImageZoomed(false);
+        }
       }
     };
 
@@ -227,11 +343,7 @@ function ReaderView({ item, onBackToQueue, onSchedule, onDelete, isItemFromAllIt
           </div>
         );
       case 'pdf':
-        return (
-          <a href={item.content} download={item.fileName} target="_blank" rel="noopener noreferrer">
-            Download {item.fileName || 'PDF'}
-          </a>
-        );
+        return <PDFViewer url={item.content} fileName={item.fileName} />;
       default:
         return <p>Unsupported item type: {item.type}</p>;
     }
