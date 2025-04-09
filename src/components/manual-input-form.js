@@ -147,6 +147,7 @@ function ManualInputForm() {
                   }
                 }
               }}
+              autoFocus={true}
             />
           </div>
         )}

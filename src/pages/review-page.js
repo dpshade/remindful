@@ -294,6 +294,7 @@ function ReviewPage() {
                   handleSaveNewItem();
                 }
               }}
+              autoFocus={true}
             />
             <div className="text-input-actions">
               <button onClick={handleSaveNewItem} title="Save">
