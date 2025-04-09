@@ -38,4 +38,34 @@
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
   </body>
+  <script>
+    // Analytics initialization - just copy this entire script tag to any project
+    (function() {
+      // Configuration
+      const ANALYTICS_CONFIG = {
+        src: 'https://analytics_arlink.ar.io/browser.js',
+        processId: '7B4sltuRuvFVeXxrMKS4tQiGqQp2iM9VtO2Wphm7pJE',
+        trackUrlHashes: true,
+        debug: false
+      };
+
+      // Wait for DOM to be ready
+      function init() {
+        const script = document.createElement('script');
+        script.type = 'module';
+        script.src = ANALYTICS_CONFIG.src;
+        script.setAttribute('data-process-id', ANALYTICS_CONFIG.processId);
+        script.setAttribute('data-track-url-hashes', ANALYTICS_CONFIG.trackUrlHashes);
+        script.setAttribute('data-debug', ANALYTICS_CONFIG.debug);
+        document.body.appendChild(script);
+      }
+
+      // Handle different loading states
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
 </html>
