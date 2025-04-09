@@ -243,7 +243,7 @@ function ReviewPage() {
         {item.type === 'link' ? (item.content.substring(0, 40) + '...') : (item.fileName || item.content.substring(0, 40) + '...')}
       </span>
       <span className="item-meta">
-        Priority: {item.priority} | Type: {item.type}
+        Type: {item.type}
         {showAllItems && <span className="due-date">Due: {new Date(item.nextReviewDate).toLocaleDateString()}</span>}
       </span>
     </li>
