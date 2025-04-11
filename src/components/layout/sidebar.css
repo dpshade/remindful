@@ -1,0 +1,30 @@
+.sidebar-nav h2 {
+  margin-top: 0;
+  font-size: 1.2rem;
+  color: #333;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.sidebar-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-nav li {
+  margin-bottom: 0.8rem;
+}
+
+.sidebar-nav a {
+  text-decoration: none;
+  color: #007bff; /* Standard link color */
+  font-size: 1rem;
+}
+
+.sidebar-nav a:hover,
+.sidebar-nav a:focus {
+  text-decoration: underline;
+  color: #0056b3;
+} 

@@ -3,19 +3,19 @@ import ReaderView from '../components/reader-view';
 import Modal from '../components/modal';
 import { getDueReviewItems, getSettings, saveReviewItem, getAllReviewItems } from '../storage/storage';
 import { markItemAsRead, deleteReviewItem, scheduleItemForDate } from '../logic/review-actions-mvp';
-import { FaPlus, FaFileAlt, FaCloudUploadAlt, FaInbox, FaList, FaSave } from 'react-icons/fa';
+import { FaPlus, FaFileAlt, FaCloudUploadAlt, FaInbox, FaList, FaSave, FaArrowLeft } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
 import { calculateInitialReviewState } from '../logic/scheduler';
 import { readFileAsDataURL } from '../utils/file-helpers';
 
-function ReviewPage() {
+function ReviewPage({ isMobile }) {
   const [dueItems, setDueItems] = useState([]);
   const [selectedItemId, setSelectedItemId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isTextInputOpen, setIsTextInputOpen] = useState(true);
+  const [isTextInputOpen, setIsTextInputOpen] = useState(false);
   const [showAllItems, setShowAllItems] = useState(false);
   const [allItems, setAllItems] = useState([]);
   const [textInput, setTextInput] = useState('');
@@ -32,13 +32,18 @@ function ReviewPage() {
       ]);
       setDueItems(dueItemsResult);
       setAllItems(allItemsResult);
+      if (!isMobile && dueItemsResult.length > 0 && !selectedItemId) {
+         if (!selectedItemId) { 
+             setSelectedItemId(dueItemsResult[0].id);
+         }
+      }
     } catch (err) {
       console.error("Error loading data:", err);
       setError('Failed to load review items.');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isMobile, selectedItemId]);
 
   useEffect(() => {
     loadData();
@@ -55,11 +60,29 @@ function ReviewPage() {
     setIsTextInputOpen(false);
   }, []);
 
-  const handleActionComplete = useCallback(async () => {
-    await loadData();
+  const handleBackToList = useCallback(() => {
     setSelectedItemId(null);
-    setIsTextInputOpen(true);
-  }, [loadData]);
+    setIsTextInputOpen(false);
+  }, []);
+
+  const handleActionComplete = useCallback(async () => {
+    const previouslySelectedItem = selectedItemId;
+    setSelectedItemId(null);
+    setIsTextInputOpen(false);
+    await loadData();
+
+    if (!isMobile) {
+      const currentItems = showAllItems ? allItems : dueItems;
+      const completedIndex = currentItems.findIndex(item => item.id === previouslySelectedItem);
+      if (completedIndex !== -1 && completedIndex < currentItems.length - 1) {
+          setSelectedItemId(currentItems[completedIndex + 1].id);
+      } else if (currentItems.length > 0) {
+          setSelectedItemId(currentItems[0].id);
+      } else {
+          setIsTextInputOpen(true);
+      }
+    }
+  }, [loadData, isMobile, showAllItems, allItems, dueItems, selectedItemId]);
 
   const handleMarkAsReadAction = useCallback(async (quality) => {
     if (!selectedItem) return;
@@ -106,34 +129,44 @@ function ReviewPage() {
     setIsAddModalOpen(false);
   };
 
-  const handleAddTextNote = () => {
+  const handleAddTextNote = useCallback(() => {
     setIsAddModalOpen(false);
-    setIsTextInputOpen(true);
     setSelectedItemId(null);
+    setIsTextInputOpen(true);
     setTextInput('');
-  };
+  }, []);
 
   const handleCloseTextInput = useCallback(() => {
     setIsTextInputOpen(false);
     setTextInput('');
-  }, []);
+    if (!isMobile && !selectedItemId && dueItems.length > 0) {
+        setSelectedItemId(dueItems[0].id);
+    }
+  }, [isMobile, selectedItemId, dueItems]);
 
   const handleSaveNewItem = useCallback(async () => {
     if (!textInput.trim()) return;
     setError(null);
     try {
-      // Auto-detect URL using the same regex pattern
+      const settings = await getSettings();
+      if (!settings) {
+        throw new Error("Settings not available.");
+      }
+      const defaultPriority = 5;
+      const { nextReviewDate, interval, easeFactor } = calculateInitialReviewState(settings, defaultPriority);
+
       const isURL = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i.test(textInput.trim());
       
       const newItem = {
         id: uuidv4(),
         type: isURL ? 'link' : 'note',
         content: textInput.trim(),
-        priority: 5,
+        priority: defaultPriority,
         addedDate: Date.now(),
-        nextReviewDate: Date.now(),
-        interval: 1,
-        easeFactor: 2.5
+        nextReviewDate: nextReviewDate,
+        interval: interval,
+        easeFactor: easeFactor,
+        tags: []
       };
       await saveReviewItem(newItem);
       await loadData();
@@ -163,13 +196,12 @@ function ReviewPage() {
         throw new Error("Settings not available.");
       }
       
-      const itemPriority = 5; // Default priority
+      const itemPriority = 5;
       const { nextReviewDate, interval, easeFactor } = calculateInitialReviewState(settings, itemPriority);
       let itemType = 'note';
       let itemContent = '';
       let fileName = file.name;
 
-      // Determine file type and handle accordingly
       if (file.type.startsWith('image/')) {
         itemType = 'image';
         itemContent = await readFileAsDataURL(file);
@@ -177,7 +209,6 @@ function ReviewPage() {
         itemType = 'pdf';
         itemContent = await readFileAsDataURL(file);
       } else {
-        // Try to read as text for other file types
         try {
           itemContent = await file.text();
           itemType = 'note';
@@ -203,7 +234,6 @@ function ReviewPage() {
       await saveReviewItem(newItem);
       await loadData();
       
-      // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -219,124 +249,151 @@ function ReviewPage() {
 
   const handleShowAllItems = useCallback(async () => {
     try {
-      const items = await getAllReviewItems();
-      setAllItems(items);
-      setShowAllItems(true);
+      if (allItems.length > 0 && !showAllItems) {
+          setShowAllItems(true);
+          setSelectedItemId(null);
+          setIsTextInputOpen(false);
+      } else {
+        const items = await getAllReviewItems();
+        setAllItems(items);
+        setShowAllItems(true);
+        setSelectedItemId(null);
+        setIsTextInputOpen(false);
+      }
     } catch (err) {
       console.error("Error loading all items:", err);
       setError('Failed to load all items.');
     }
+  }, [allItems, showAllItems]);
+
+  const handleShowDueItems = useCallback(() => {
+    setShowAllItems(false);
+    setSelectedItemId(null);
+    setIsTextInputOpen(false);
   }, []);
 
-  const handleShowDueItems = useCallback(async () => {
-    setShowAllItems(false);
-    await loadData();
-  }, [loadData]);
+  const SidebarComponent = () => (
+    <aside className="sidebar">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--spacing-unit)' }}>
+        <h2>{showAllItems ? 'All Items' : 'Review Inbox'} ({showAllItems ? allItems.length : dueItems.length})</h2>
+        <button onClick={showAllItems ? handleShowDueItems : handleShowAllItems} className="secondary" style={{ padding: '5px 10px', fontSize: '0.8rem' }}>
+          {showAllItems ? <FaInbox/> : <FaList/>}
+          {showAllItems ? ' Show Due' : ' Show All'}
+        </button>
+      </div>
 
-  const renderSidebarItem = (item) => (
-    <li
-      key={item.id}
-      onClick={() => handleSelectItem(item.id)}
-      className={selectedItemId === item.id && !isTextInputOpen ? 'selected' : ''}
-    >
-      <span className="item-title">
-        {item.type === 'link' ? (item.content.substring(0, 40) + '...') : (item.fileName || item.content.substring(0, 40) + '...')}
-      </span>
-      <span className="item-meta">
-        Type: {item.type}
-        {showAllItems && <span className="due-date">Due: {new Date(item.nextReviewDate).toLocaleDateString()}</span>}
-      </span>
-    </li>
+      {isLoading && <p>Loading...</p>}
+      <div className="sidebar-content">
+          <ul>
+            {(showAllItems ? allItems : dueItems).map(item => (
+              <li
+                key={item.id}
+                onClick={() => handleSelectItem(item.id)}
+                className={selectedItemId === item.id && !isTextInputOpen ? 'selected' : ''}
+              >
+                <span className="item-title">
+                  {item.fileName || item.content.substring(0, 40) + (item.content.length > 40 ? '...' : '')}
+                </span>
+                <span className="item-meta">
+                  Type: {item.type}
+                  {(showAllItems || new Date(item.nextReviewDate) > Date.now() + 86400000) &&
+                    <span className="due-date">Due: {new Date(item.nextReviewDate).toLocaleDateString()}</span>
+                  }
+                </span>
+              </li>
+            ))}
+          </ul>
+          {(showAllItems ? allItems.length === 0 : dueItems.length === 0) && !isLoading && (
+            <p style={{ textAlign: 'center', padding: '20px', color: 'var(--secondary-text-color)' }}>No items {showAllItems ? 'found' : 'due'}.</p>
+          )}
+      </div>
+
+      <div className="sidebar-actions">
+          <button onClick={handleShowAddModal} className="menu-button">
+              <FaPlus />
+          </button>
+      </div>
+    </aside>
   );
 
-  return (
-    <div className="review-layout">
-      <aside className="sidebar">
-        <div className="sidebar-header">
-          <h2>{showAllItems ? 'All Items' : `Review Inbox (${dueItems.length})`}</h2>
-        </div>
-        <div className="sidebar-content">
-          {isLoading && <p>Loading...</p>}
-          {error && <div className="error-message">Error: {error}</div>}
-          {!isLoading && !error && (
-            <ul>
-              {(showAllItems ? allItems : dueItems).length > 0 ?
-                (showAllItems ? allItems : dueItems)
-                  .slice() // Create a shallow copy to avoid mutating state
-                  .sort((a, b) => a.nextReviewDate - b.nextReviewDate) // Sort by upcoming date
-                  .map(renderSidebarItem) :
-                <li><p>No items found.</p></li>
-              }
-            </ul>
-          )}
-        </div>
-        <div className="sidebar-actions">
-          <button onClick={showAllItems ? handleShowDueItems : handleShowAllItems} title={showAllItems ? "Show Due Items" : "Show All Items"} className="menu-button">
-            {showAllItems ? <FaInbox /> : <FaList />}
-          </button>
-          <button onClick={handleShowAddModal} title="Add New Content" className="new-item-button">
-            <FaPlus />
-          </button>
-        </div>
-      </aside>
-
+  const CanvasComponent = ({ showBackButton }) => (
       <main className="main-canvas">
+        {showBackButton && (
+          <button onClick={handleBackToList} className="back-button" style={{ marginBottom: 'var(--spacing-unit)', background: 'none', border: 'none', color: 'var(--accent-color)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <FaArrowLeft /> Back to List
+          </button>
+        )}
+        {error && <div className="error-message">Error: {error}</div>}
         {isFileUploading && <div className="file-upload-overlay">Uploading file...</div>}
-        {selectedItem ? (
-          <ReaderView
-            item={selectedItem}
-            onBackToQueue={handleMarkAsReadAction}
-            onSchedule={handleScheduleAction}
-            onDelete={handleDeleteAction}
-            isItemFromAllItems={showAllItems}
-          />
-        ) : (
-          <div className="text-input-container">
+        {isTextInputOpen ? (
+          <div className="new-item-canvas">
             <textarea
-              className="text-input"
               placeholder="Enter your text note here... (Cmd/Ctrl+Enter to save)"
-              rows={10}
               value={textInput}
               onChange={(e) => setTextInput(e.target.value)}
               onKeyDown={(e) => {
-                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-                  e.preventDefault();
-                  handleSaveNewItem();
-                }
+                  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                      handleSaveNewItem();
+                  }
               }}
-              autoFocus={true}
+              autoFocus
             />
-            <div className="text-input-actions">
-              <button onClick={handleSaveNewItem} title="Save Note">
-                <FaSave />
-              </button>
+            <div className="save-button-container">
+                <button onClick={handleSaveNewItem} disabled={!textInput.trim()} className="save-button">
+                    <FaSave />
+                </button>
+                 {isMobile && (
+                    <button onClick={handleCloseTextInput} className="secondary" style={{ marginLeft: '8px' }}>Cancel</button>
+                 )}
             </div>
+          </div>
+        ) : selectedItem ? (
+          <ReaderView
+            item={selectedItem}
+            onMarkAsRead={handleMarkAsReadAction}
+            onSchedule={handleScheduleAction}
+            onDelete={handleDeleteAction}
+          />
+        ) : (
+          <div className="canvas-placeholder">
+            {isLoading ? 'Loading item...' : 'Select an item from the list to review or add a new one.'}
           </div>
         )}
       </main>
-
-      <Modal
-        isOpen={isAddModalOpen}
-        onClose={handleCloseAddModal}
-        title="Add New Content"
-      >
-        <ul className="modal-action-list">
-          <li><button onClick={handleAddTextNote}><FaFileAlt /> Add Text Note</button></li>
-          <li><button onClick={handleUploadFile} disabled={isFileUploading}><FaCloudUploadAlt /> {isFileUploading ? 'Uploading...' : 'Upload File'}</button></li>
-        </ul>
-      </Modal>
-      
-      {/* Hidden file input */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        style={{ display: 'none' }}
-        onChange={handleFileChange}
-        accept="image/*,application/pdf,text/*"
-        disabled={isFileUploading}
-      />
-    </div>
   );
+
+  console.log('Rendering ReviewPage:', { isMobile, selectedItemId, isTextInputOpen });
+
+  return (
+    <>
+        {isMobile ? (
+            <> 
+                {!selectedItemId && !isTextInputOpen && <SidebarComponent />} 
+                {(selectedItemId || isTextInputOpen) && <CanvasComponent showBackButton={true} />} 
+            </>
+        ) : (
+            <div className="review-layout">
+                <SidebarComponent />
+                <CanvasComponent showBackButton={false} />
+            </div>
+        )}
+
+        <Modal isOpen={isAddModalOpen} onClose={handleCloseAddModal}>
+            <h3>Add New Item</h3>
+            <ul className="modal-action-list">
+                <li><button onClick={handleAddTextNote}><FaFileAlt /> Add Text Note</button></li>
+                <li><button onClick={handleUploadFile}><FaCloudUploadAlt /> Upload File</button></li>
+            </ul>
+        </Modal>
+
+        <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            style={{ display: 'none' }}
+        />
+    </>
+);
 }
 
 export default ReviewPage; 

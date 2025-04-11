@@ -1,0 +1,20 @@
+.desktop-layout {
+  display: flex;
+  height: 100vh; /* Full viewport height */
+  width: 100vw; /* Full viewport width */
+  overflow: hidden; /* Prevent scrolling on the main layout */
+}
+
+.desktop-layout__sidebar {
+  width: 250px; /* Fixed sidebar width, adjust as needed */
+  border-right: 1px solid #ccc; /* Simple border */
+  padding: 1rem;
+  overflow-y: auto; /* Allow sidebar content to scroll if needed */
+  background-color: #f8f9fa; /* Light background for the sidebar */
+}
+
+.desktop-layout__content {
+  flex-grow: 1; /* Content area takes remaining space */
+  padding: 1rem;
+  overflow-y: auto; /* Allow content area to scroll if needed */
+} 

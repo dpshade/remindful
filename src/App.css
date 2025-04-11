@@ -135,10 +135,21 @@ nav ul li a.active {
 }
 
 main {
+  /* Base styles for main - applicable to mobile */
+  flex-grow: 1; /* Make main fill vertical space in .App */
+  display: flex; /* Allow child (Sidebar or Canvas) to fill height */
+  flex-direction: column; /* Stack children vertically (only one child on mobile) */
+  width: 100%; /* Ensure main takes full width */
+  overflow: hidden; /* Prevent main itself from scrolling */
+
+  /* Desktop overrides */
   @media (min-width: var(--desktop-breakpoint)) {
     padding: 0; /* No padding on desktop */
     height: 100%; /* Fill App's height */
     overflow: hidden; /* Prevent scrolling at main level */
+    /* flex-grow: 1; is fine here too */
+    /* display: flex; is fine */
+    /* flex-direction: column; is fine or overridden by .review-layout */
   }
 }
 
@@ -380,15 +391,15 @@ small {
 .reader-view {
     display: flex;
     flex-direction: column;
-    height: 100%;
     position: relative;
+    flex-grow: 1;
 }
 
 .reader-content {
     flex: 1;
     overflow-y: auto;
     padding: var(--container-padding);
-    padding-bottom: calc(var(--spacing-unit) * 8); /* Space for sticky actions */
+    min-height: 0; /* Add this to help flex calculation */
 }
 
 .reader-content a {
@@ -414,15 +425,15 @@ small {
 
 .reader-actions {
     display: flex;
-    justify-content: flex-end; /* Changed from space-between */
-    gap: var(--spacing-unit); /* Keep gap consistent */
+    justify-content: flex-end;
+    gap: var(--spacing-unit);
     padding-top: calc(var(--spacing-unit) * 2);
     border-top: 1px solid var(--border-color);
     margin-top: calc(var(--spacing-unit) * 2);
+    flex-shrink: 0;
 
-    /* Remove full width on desktop, let it hug content */
     @media (min-width: var(--desktop-breakpoint)) {
-        /* Add specific styles for desktop if needed */
+      /* Add specific styles for desktop if needed */
     }
 }
 
@@ -467,9 +478,9 @@ small {
 
 /* --- Review Page Specific --- */
 .review-layout {
-  /* Mobile: stack layout (default) */
-  display: flex;
-  height: 90vh;
+  /* Mobile styles removed - only used on desktop */
+  /* display: flex; <-- Remove */
+  /* height: 90vh; <-- Remove */
 
   /* Desktop: side-by-side layout */
   @media (min-width: var(--desktop-breakpoint)) {
@@ -480,31 +491,32 @@ small {
 }
 
 .sidebar {
-  /* Mobile: Normal flow */
-  width: 30%;
-  margin-bottom: calc(var(--spacing-unit) * 3);
+  /* Base styles for mobile */
+  width: 100%;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex-grow: 1; /* Replace height with flex-grow */
   position: relative;
-  overflow-y: auto;
 
   /* Desktop: Fixed width sidebar */
   @media (min-width: var(--desktop-breakpoint)) {
     width: var(--sidebar-width);
     min-width: var(--sidebar-width);
     flex: none;
-    height: 100%;
+    height: 100%; /* Keep height for desktop */
     background-color: var(--bg-color);
     border-right: 1px solid var(--border-color);
     margin-bottom: 0;
+    overflow: hidden;
+    flex-grow: 0; /* Override flex-grow for desktop */
   }
 }
 
 .sidebar-content {
   flex: 1;
   overflow-y: auto;
-  padding-bottom: calc(var(--spacing-unit) * 8);
+  padding: 0 var(--spacing-unit); /* Add horizontal padding if needed */
+  min-height: 0; /* Add this to help flex calculation */
   scrollbar-width: thin;
   scrollbar-color: var(--border-color) transparent;
 }
@@ -548,9 +560,8 @@ small {
     padding: var(--spacing-unit) var(--spacing-unit) 6.5px var(--spacing-unit);
     background-color: var(--bg-color);
     border-top: 1px solid var(--border-color);
-    position: sticky;
-    bottom: 0;
     z-index: 1;
+    flex-shrink: 0;
     backdrop-filter: blur(8px);
     background-color: rgba(255, 255, 255, 0.9);
 }
@@ -632,17 +643,23 @@ small {
 
 /* Canvas Placeholder */
 .main-canvas {
-  flex: 1;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-color) transparent;
-} 
+  flex: 1; /* Keep for desktop flex layout */
+  width: 100%;
+  height: 100%; /* Add this */
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* Keep this potentially helpful property */
+}
 
 .canvas-placeholder {
     color: var(--secondary-text-color);
     text-align: center;
     padding: calc(var(--spacing-unit) * 5) 0;
     font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
 }
 
 /* Review Actions (below ReaderView) */
@@ -662,13 +679,14 @@ small {
 
 /* WYSIWYG / Textarea Placeholder Style */
 .new-item-canvas {
-    height: 100%; /* Attempt to fill canvas height */
     display: flex;
     flex-direction: column;
+    padding: var(--container-padding);
+    flex-grow: 1;
 }
 
 .new-item-canvas textarea {
-    flex-grow: 1; /* Allow textarea to expand */
+    flex-grow: 1; /* Already set, good */
     font-size: var(--base-font-size);
     line-height: var(--base-line-height);
     width: 100%;

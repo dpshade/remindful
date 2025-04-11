@@ -9,9 +9,13 @@ import { saveReviewItem, getSettings, initializeSettingsIfNeeded } from './stora
 import { v4 as uuidv4 } from 'uuid';
 import { readFileAsDataURL } from './utils/file-helpers';
 import { calculateInitialReviewState } from './logic/scheduler';
+import { useWindowSize } from './hooks/use-window-size'; // Import the hook
+import DesktopLayout from './components/layout/desktop-layout'; // Import DesktopLayout
+import Sidebar from './components/layout/sidebar'; // Import Sidebar
 
 function App() {
   const [shareError, setShareError] = useState(null);
+  const { isMobile } = useWindowSize(); // Use the hook
 
   useEffect(() => {
     initializeSettingsIfNeeded();
@@ -111,18 +115,32 @@ function App() {
 
   }, []);
 
+  console.log('Current isMobile state:', isMobile);
+
+  const PageRoutes = () => (
+    <>
+      {shareError && <div className="error-message">Error: {shareError}</div>}
+      <Routes>
+        <Route path="/" element={<ReviewPage isMobile={isMobile} />} />
+        {/* <Route path="/catalog" element={<CatalogPage />} /> */} {/* Remove route */}
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/add-note" element={<AddNoteFromParam />} />
+      </Routes>
+    </>
+  );
+
   return (
     <Router>
       <div className="App">
-        <main>
-          {shareError && <div className="error-message">Error: {shareError}</div>}
-          <Routes>
-            <Route path="/" element={<ReviewPage />} />
-            {/* <Route path="/catalog" element={<CatalogPage />} /> */} {/* Remove route */}
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/add-note" element={<AddNoteFromParam />} />
-          </Routes>
-        </main>
+        {isMobile ? (
+          <main>
+            <PageRoutes />
+          </main>
+        ) : (
+          <DesktopLayout>
+            <PageRoutes />
+          </DesktopLayout>
+        )}
       </div>
     </Router>
   );
