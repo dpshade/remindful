@@ -1,63 +1,43 @@
-# Review App PWA MVP
+# Remindful
 
-A personal knowledge review app built as a Progressive Web App (PWA) that allows users to capture notes, links, and images and review them based on a spaced repetition schedule.
+A spaced repetition app for everything you want to remember.
+
+Capture notes, links, images, and PDFs. Review them on a schedule that adapts to how well you know each item.
 
 ## Features
 
-- Capture text notes, URLs, images, and PDFs for later review
-- Schedule reviews based on priority and spaced repetition algorithm
-- Set daily review limits
-- Filter and browse all saved items in a catalog view
-- Export/import data for backup and transfer
+- **Capture anything** — text, URLs, images, PDFs
+- **Smart scheduling** — spaced repetition surfaces items right before you'd forget
+- **Daily limits** — control your review load
+- **Catalog view** — browse and filter all your items
+- **Offline-first** — works without internet, syncs when connected
+- **Your data** — export/import for backup and portability
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js (v14 or newer)
-- npm or Yarn package manager
-- Modern web browser
-
-### Installation
-
-1. Clone the repository
-2. Install dependencies with npm or Yarn:
+## Quick Start
 
 ```bash
 npm install
-```
-
-or
-
-```bash
-yarn install
-```
-
-3. Start the development server:
-
-```bash
 npm start
 ```
 
-or
-
-```bash
-yarn start
-```
+Opens at [localhost:3000](http://localhost:3000). Install as a PWA for the best experience.
 
 ## Project Structure
 
-- ```/src/pages``` - Main app pages
-- ```/src/components``` - Reusable UI components
-- ```/src/navigation``` - Navigation configuration
-- ```/src/storage``` - IndexedDB data persistence
-- ```/src/logic``` - Business logic for review scheduling
-- ```/src/utils``` - Helper functions and utilities
+```
+src/
+├── components/    # UI components
+├── hooks/         # React hooks
+├── logic/         # Scheduling algorithm
+├── pages/         # App screens
+├── storage/       # IndexedDB persistence
+└── utils/         # Helpers
+```
 
-## Development Roadmap
+## Roadmap
 
-See [roadmap.md](roadmap.md) for detailed development plan and progress.
+See [roadmap.md](roadmap.md) for what's planned.
 
----
+## License
 
-This checklist format provides a clear and organized view of the tasks needed to develop the PWA, focusing on a minimal and engaging user experience. 
+MIT

@@ -59,19 +59,19 @@ body {
 }
 
 .App {
-  /* Mobile first: constrained width */
+  /* Mobile first */
   margin: 0 auto;
-  padding: var(--container-padding);
-  min-height: 100%; /* Ensure full height */
+  /* padding: var(--container-padding); <-- Remove base padding */
+  min-height: 100%;
   display: flex;
   flex-direction: column;
 
-  /* Desktop: allow full width, no padding */
+  /* Desktop overrides */
   @media (min-width: var(--desktop-breakpoint)) {
     max-width: none;
     margin: 0;
     padding: 0;
-    height: 100%; /* Important: explicit height */
+    height: 100%;
   }
 }
 
